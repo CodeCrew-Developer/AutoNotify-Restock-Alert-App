@@ -12,6 +12,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 export async function action({ request }) {
+   const { admin } = await authenticate.admin(request);
   try {
     const data = await request.json();
     
