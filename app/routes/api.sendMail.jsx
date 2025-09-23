@@ -1,15 +1,14 @@
 import { json } from "@remix-run/node";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
+import { authenticate } from "../shopify.server";
 
-const myEnv = {};
-dotenv.config({ processEnv: myEnv });
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: myEnv.EMAIL_USER,
-    pass: myEnv.EMAIL_PASS,
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
 });
 export async function action({ request }) {
@@ -23,7 +22,7 @@ export async function action({ request }) {
     }
 
     let info = await transporter.sendMail({
-      from: `"AutoNotify - Restock Alert" <${myEnv.EMAIL_USER}>`,
+      from: `"AutoNotify - Restock Alert" <${process.env.EMAIL_USER}>`,
       to,
       subject: subject || "Hello ✔",
       text: text || "Hello world?",
