@@ -1,6 +1,5 @@
 import { json } from "@remix-run/node";
 import nodemailer from "nodemailer";
-import dotenv from "dotenv";
 import { authenticate } from "../shopify.server";
 
 
