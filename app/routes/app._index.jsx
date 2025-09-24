@@ -392,7 +392,7 @@ export default function NotifyDashboard() {
                         : "#"
                     }
                     target="_blank"
-                    external
+                    external="true"
                   >
                     Add app block
                   </Button>
@@ -412,7 +412,7 @@ export default function NotifyDashboard() {
                   </Text>
                   <Button
                     url="https://apps.shopify.com/partners/gaurang2"
-                    external
+                    external="true"
                     target="_blank"
                   >
                     More Apps
@@ -449,7 +449,7 @@ export default function NotifyDashboard() {
                             </Text>
                             <Button
                               url={app.appUrl}
-                              external={true}
+                              external="true"
                               target="_blank"
                               fullWidth={false}
                             >

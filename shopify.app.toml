@@ -22,6 +22,18 @@ api_version = "2025-07"
   topics = [ "app/uninstalled" ]
   uri = "/webhooks/app/uninstalled"
 
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/app/customers/data_request"
+  compliance_topics = [ "customers/data_request" ]
+ 
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/app/customers/redact"
+  compliance_topics = [ "customers/redact" ]
+ 
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/app/uninstalled"
+  compliance_topics = [ "shop/redact" ]
+
 [auth]
 redirect_urls = [
   "https://autonotify-restock-alert-app-production.up.railway.app/auth/callback",

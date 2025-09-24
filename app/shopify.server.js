@@ -10,12 +10,19 @@ import mongoose from "mongoose";
 
 async function connectDB() {
   try {
-    const mongoUrl = process.env.MONGODB_URL
+    if (mongoose.connection.readyState === 1) {
+      console.log("MongoDB already connected ✅");
+      return;
+    }
+
+    const mongoUrl = process.env.MONGODB_URL;
+    console.log("Connecting to:", mongoUrl);
+
     await mongoose.connect(mongoUrl);
-    console.log("MongoDB connected successfully!");
+    console.log("MongoDB connected successfully! ✅");
   } catch (error) {
-    console.error("MongoDB connection error:", error);
-    process.exit(1); // Exit process with failure
+    console.error("MongoDB connection error ❌:", error);
+    process.exit(1);
   }
 }
 
