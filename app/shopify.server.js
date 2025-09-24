@@ -10,7 +10,8 @@ import mongoose from "mongoose";
 
 async function connectDB() {
   try {
-    await mongoose.connect("mongodb://0.0.0.0:27017/notify-me");
+    const mongoUrl = process.env.MONGODB_URL
+    await mongoose.connect(mongoUrl);
     console.log("MongoDB connected successfully!");
   } catch (error) {
     console.error("MongoDB connection error:", error);
