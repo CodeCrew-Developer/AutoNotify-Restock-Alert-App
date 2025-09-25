@@ -31,7 +31,7 @@
     top: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
     transition: 0.5s;
     z-index: -1;
   }
@@ -63,8 +63,12 @@
   }
 
   @keyframes Anra_shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
   }
 
   /* Animation Direction Classes - Only from-center kept */
@@ -305,7 +309,7 @@
 
   .Anra_notify-me .Anra_submit-btn:hover {
     transform: translateY(-3px);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
   }
 
   .Anra_notify-me .Anra_submit-btn:hover:before {
@@ -390,8 +394,14 @@
   }
 
   @keyframes Anra_fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 </style>
 
@@ -402,9 +412,7 @@
       onclick="openPopup()"
     >
       Notify Me
-      
     </button>
-   
   </div>
 </div>
 
@@ -446,10 +454,12 @@
 
         <button type="submit" class="Anra_submit-btn">NOTIFY ME</button>
 
-        {% comment %} <div class="Anra_newsletter-option">
-          <input type="checkbox" id="Anra_newsletterSignup">
-          <label for="Anra_newsletterSignup">Signup for newsletter?</label>
-        </div> {% endcomment %}
+        {% comment %}
+          <div class="Anra_newsletter-option">
+            <input type="checkbox" id="Anra_newsletterSignup">
+            <label for="Anra_newsletterSignup">Signup for newsletter?</label>
+          </div>
+        {% endcomment %}
 
         <p class="Anra_privacy-text">We respect your privacy and do not share your email with anyone.</p>
       </form>
@@ -493,16 +503,17 @@
 `;
 
   var shopDomain = '{{shop.domain}}';
-  var shopName = '{{shop.name}}'; 
+  var shopName = '{{shop.name}}';
   var accessToken = '{{ access_token }}';
   var blockID = '{{block_id}}';
   var allVariants = [];
   var selectedVariantId = '';
   var currentAnimation = 'from-center';
   var hasOutOfStockVariants = false;
-  var currentProductId = ''; 
+  var currentProductId = '';
 
   async function fetchShopifyInventoryByVariant(variantId) {
+    console.log('fetchShopifyInventoryByVariant');
     const shopifyUrl = `https://${shopDomain}/admin/api/2024-07/graphql.json`;
     const headers = {
       'Content-Type': 'application/json',
@@ -519,21 +530,21 @@
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-      
+
       const responseData = await response.json();
-      
+
       if (responseData.data?.productVariant?.product?.variants?.edges) {
         if (responseData.data.productVariant?.product?.id) {
           currentProductId = responseData.data.productVariant.product.id.split('/').pop();
         }
-        
-        allVariants = responseData.data.productVariant.product.variants.edges.map(edge => {
+
+        allVariants = responseData.data.productVariant.product.variants.edges.map((edge) => {
           const variant = edge.node;
           let availableQuantity = 0;
           if (variant.inventoryItem?.inventoryLevels?.edges) {
-            variant.inventoryItem.inventoryLevels.edges.forEach(level => {
+            variant.inventoryItem.inventoryLevels.edges.forEach((level) => {
               if (level.node.quantities) {
-                level.node.quantities.forEach(qty => {
+                level.node.quantities.forEach((qty) => {
                   if (qty.name === 'available') {
                     availableQuantity += qty.quantity;
                   }
@@ -541,22 +552,22 @@
               }
             });
           }
-          
+
           return {
             id: variant.id,
             title: variant.title,
             available: availableQuantity > 0,
-            quantity: availableQuantity
+            quantity: availableQuantity,
           };
         });
-        
-        hasOutOfStockVariants = allVariants.some(variant => !variant.available);
-        
+
+        hasOutOfStockVariants = allVariants.some((variant) => !variant.available);
+
         showNotifyButtonIfNeeded();
-        
+
         populateVariantSelector();
       }
-      
+
       return responseData;
     } catch (error) {
       console.error('Error fetching product data fields:', error.message);
@@ -566,8 +577,9 @@
   }
 
   function showNotifyButtonIfNeeded() {
+    console.log('showNotifyButtonIfNeeded');
     const btnContainer = document.getElementById('Anra_inventory-info-button');
-    
+
     if (hasOutOfStockVariants) {
       btnContainer.classList.remove('Anra_loading');
       btnContainer.classList.add('Anra_show');
@@ -577,49 +589,52 @@
   }
 
   function hideNotifyButton() {
+    console.log('hideNotifyButton');
     const btnContainer = document.getElementById('Anra_inventory-info-button');
     btnContainer.classList.remove('Anra_loading', 'Anra_show');
     // console.log('Notify Me button hidden due to error or no data');
   }
 
   function populateVariantSelector() {
+    console.log('populateVariantSelector');
+
     const variantSelector = document.getElementById('Anra_variantSelector');
     const stockStatus = document.getElementById('Anra_stockStatus');
-    
+
     while (variantSelector.options.length > 1) {
       variantSelector.remove(1);
     }
-    
-    const outOfStockVariants = allVariants.filter(variant => !variant.available);
-    
+
+    const outOfStockVariants = allVariants.filter((variant) => !variant.available);
+
     if (outOfStockVariants.length === 0) {
       variantSelector.options[0].textContent = 'All variants are in stock';
       return;
     }
-    
+
     variantSelector.options[0].textContent = 'Select an out-of-stock variant';
-    
-    outOfStockVariants.forEach(variant => {
+
+    outOfStockVariants.forEach((variant) => {
       const option = document.createElement('option');
       option.value = variant.id;
       option.textContent = variant.title;
       option.classList.add('Anra_out-of-stock');
       variantSelector.appendChild(option);
     });
-    
+
     if (outOfStockVariants.length === 1) {
       variantSelector.value = outOfStockVariants[0].id;
       selectedVariantId = outOfStockVariants[0].id;
       stockStatus.textContent = 'Out of stock';
       stockStatus.style.color = '#f44336';
-      
+
       variantSelector.parentElement.style.display = 'none';
     }
-    
-    variantSelector.addEventListener('change', function() {
+
+    variantSelector.addEventListener('change', function () {
       selectedVariantId = this.value;
-      const selectedVariant = allVariants.find(v => v.id === selectedVariantId);
-      
+      const selectedVariant = allVariants.find((v) => v.id === selectedVariantId);
+
       if (selectedVariant) {
         stockStatus.textContent = 'Out of stock';
         stockStatus.style.color = '#f44336';
@@ -628,6 +643,8 @@
   }
 
   function checkInitialStockStatus() {
+    console.log('checkInitialStockStatus');
+
     const Id = getProductform();
     if (Id) {
       const variantId = `gid://shopify/ProductVariant/${Id}`;
@@ -638,36 +655,40 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
+    console.log('DOMContentLoaded');
+
     let productInfoWrapper = document.querySelector('footer');
     let popup = document.getElementById('Anra_popupOverlay');
 
     if (productInfoWrapper && popup) {
       productInfoWrapper.insertAdjacentElement('afterend', popup);
     }
-    
+
     setTimeout(checkInitialStockStatus, 100);
   });
-  
+
   function getProductform() {
     const variantInputFound = document.querySelector('form[data-type="add-to-cart-form"] input[name="id"]');
+    console.log('getProductform', variantInputFound);
     return variantInputFound ? variantInputFound.value : null;
   }
-  
+
   function openPopup() {
+    console.log('openPopup');
     if (!hasOutOfStockVariants) {
       console.log('Cannot open popup - no out-of-stock variants');
       return;
     }
-    
+
     const popupOverlay = document.getElementById('Anra_popupOverlay');
     const popupModal = document.querySelector('.Anra_popup-modal');
-    
+
     popupModal.classList.remove('Anra_animate-from-center');
     popupModal.classList.add(`Anra_animate-${currentAnimation}`);
-    
+
     popupOverlay.style.display = 'block';
     document.body.style.overflow = 'hidden';
-    
+
     setTimeout(() => {
       popupOverlay.classList.add('Anra_active');
       popupModal.classList.add('Anra_active');
@@ -675,15 +696,16 @@
   }
 
   function closePopup() {
+    console.log('closePopup');
     const popupOverlay = document.getElementById('Anra_popupOverlay');
     const popupModal = document.querySelector('.Anra_popup-modal');
-    
+
     popupOverlay.classList.remove('Anra_active');
     popupModal.classList.remove('Anra_active');
-    
+
     document.getElementById('Anra_successAnimation').style.display = 'none';
     document.getElementById('Anra_popupContent').style.display = 'block';
-    
+
     setTimeout(() => {
       popupOverlay.style.display = 'none';
       document.body.style.overflow = 'auto';
@@ -691,8 +713,10 @@
   }
 
   function handleSubmit(event) {
+    console.log('handleSubmit');
     event.preventDefault();
 
+    console.log('selectedVariantId', selectedVariantId);
     if (!selectedVariantId) {
       alert('Please select a variant to be notified about.');
       return;
@@ -707,59 +731,64 @@
     submitBtn.disabled = true;
 
     const variantId = selectedVariantId.split('/').pop();
-    
+    console.log('variantId', variantId);
+
     const productId = currentProductId;
+    console.log('productId', productId);
 
     const userData = {
       email: email.toLowerCase().trim(),
       productId: productId,
       variantId: variantId,
-      shopName: shopName, 
+      shopName: shopName,
       createdAt: new Date().toISOString(),
     };
 
+    console.log('userData', userData);
+
     const API_ENDPOINT = '{{ app_url }}/api/users';
-console.log("1111")
-fetch(API_ENDPOINT, {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify(userData),
-})
-.then(async (response) => {
-        console.log("2222", response)
+
+    console.log('1111', API_ENDPOINT);
+    fetch(API_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    })
+      .then(async (response) => {
+        console.log('2222', response);
         const data = await response.json();
-        console.log("3333")
-        
+        console.log('3333');
+
         if (response.ok) {
-          console.log("4444")
+          console.log('4444');
           document.getElementById('Anra_popupContent').style.display = 'none';
           document.getElementById('Anra_successAnimation').style.display = 'block';
-          
+
           setTimeout(() => {
-            console.log("5555")
+            console.log('5555');
             closePopup();
             document.getElementById('Anra_notifyForm').reset();
             submitBtn.textContent = originalText;
             submitBtn.disabled = false;
-            
+
             selectedVariantId = '';
           }, 2000);
-          console.log("6666")
+          console.log('6666');
         } else {
           throw new Error(data.message || 'Failed to submit');
         }
       })
       .catch((error) => {
         console.error('Error:', error);
-        alert("", error.message || 'Something went wrong. Please try again.');
+        alert('', error.message || 'Something went wrong. Please try again.');
         submitBtn.textContent = originalText;
         submitBtn.disabled = false;
       });
   }
 
-  document.addEventListener('change', function(event) {
+  document.addEventListener('change', function (event) {
     if (event.target.name === 'id' && event.target.closest('form[data-type="add-to-cart-form"]')) {
       setTimeout(checkInitialStockStatus, 100);
     }
@@ -770,7 +799,7 @@ fetch(API_ENDPOINT, {
       closePopup();
     }
   });
-  
+
   const getActiveThemeQuery = `
   query {
       themes(first: 20) {
@@ -784,7 +813,7 @@ fetch(API_ENDPOINT, {
       }
     }
   `;
-  
+
   const fetchGraphQL = async (query) => {
     try {
       const response = await fetch(`https://${shopDomain}/admin/api/2025-01/graphql.json`, {
@@ -807,14 +836,14 @@ fetch(API_ENDPOINT, {
       return null;
     }
   };
-(async () => {
-  try {
-    const themeData = await fetchGraphQL(getActiveThemeQuery);
-    if (!themeData) return;
+  (async () => {
+    try {
+      const themeData = await fetchGraphQL(getActiveThemeQuery);
+      if (!themeData) return;
 
-    const activeTheme = Shopify.theme.id;
+      const activeTheme = Shopify.theme.id;
 
-    const appEmbedQuery = `
+      const appEmbedQuery = `
       {
         theme(id: "gid://shopify/OnlineStoreTheme/${activeTheme}") {
           id
@@ -833,42 +862,36 @@ fetch(API_ENDPOINT, {
       }
     `;
 
-    const appEmbedData = await fetchGraphQL(appEmbedQuery);
-    if (!appEmbedData) return;
+      const appEmbedData = await fetchGraphQL(appEmbedQuery);
+      if (!appEmbedData) return;
 
-    const data = appEmbedData.data.theme.files.nodes[0].body.content;
+      const data = appEmbedData.data.theme.files.nodes[0].body.content;
 
-    // Parse theme settings JSON safely
-    const parsedSettings = JSON.parse(data.substring(data.indexOf("{")));
-    const productSectionBlocks = parsedSettings.current.blocks;
+      // Parse theme settings JSON safely
+      const parsedSettings = JSON.parse(data.substring(data.indexOf('{')));
+      const productSectionBlocks = parsedSettings.current.blocks;
 
-    // console.log("productSectionBlocks", productSectionBlocks);
+      // console.log("productSectionBlocks", productSectionBlocks);
 
-    // 🔑 Find block by matching app namespace in "type"
-    const foundBlock = Object.values(productSectionBlocks).find(
-      (item) =>
-        item.type &&
-        item.type.startsWith(
-          "shopify://apps/autonotify-restock-alert/blocks/embed"
-        )
-    );
+      // 🔑 Find block by matching app namespace in "type"
+      const foundBlock = Object.values(productSectionBlocks).find(
+        (item) => item.type && item.type.startsWith('shopify://apps/autonotify-restock-alert/blocks/embed')
+      );
 
-    // console.log("foundBlock", foundBlock);
+      // console.log("foundBlock", foundBlock);
 
-    const checkDisabled = foundBlock?.disabled ?? null;
-    // console.log("checkDisabled", checkDisabled);
+      const checkDisabled = foundBlock?.disabled ?? null;
+      // console.log("checkDisabled", checkDisabled);
 
-    
-    const popupButton = document.querySelector("#Anra_inventory-info-button");
-    // console.log(popupButton,"popupButton")
-    if (checkDisabled === true && popupButton) {
-      popupButton.innerHTML = "";
+      const popupButton = document.querySelector('#Anra_inventory-info-button');
+      // console.log(popupButton,"popupButton")
+      if (checkDisabled === true && popupButton) {
+        popupButton.innerHTML = '';
+      }
+    } catch (error) {
+      console.error('Error:', error);
     }
-  } catch (error) {
-    console.error("Error:", error);
-  }
-})();
-
+  })();
 </script>
 
 {% schema %}

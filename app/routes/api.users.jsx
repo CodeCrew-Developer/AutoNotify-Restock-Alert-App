@@ -2,7 +2,7 @@ import users from "../modes/users";
 import { ShopSettings } from "../modes/users";
 
 export async function loader({ request }) {
-  console.log("getttttttttttttttttttttt")
+  console.log("coming in loader")
   const url = new URL(request.url);
   const shopName = url.searchParams.get('shopName');
 
@@ -22,6 +22,7 @@ export async function loader({ request }) {
       shopSettings = await ShopSettings.findOne({ shopName: shopName });
     }
 
+    console.log("leaving loader")
     return new Response(
       JSON.stringify({
         users: data,
@@ -241,6 +242,7 @@ export async function action({ request }) {
     console.log("🆕 Creating user:", JSON.stringify(userData, null, 2));
     const newUser = await users.create(userData);
 
+    console.log("leaving action")
     return new Response(
       JSON.stringify({
         success: true,
