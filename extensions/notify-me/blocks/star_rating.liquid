@@ -719,22 +719,26 @@
     };
 
     const API_ENDPOINT = '{{ app_url }}/api/users';
-
-    fetch(API_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(userData),
-    })
-      .then(async (response) => {
+console.log("1111")
+fetch(API_ENDPOINT, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify(userData),
+})
+.then(async (response) => {
+        console.log("2222", response)
         const data = await response.json();
+        console.log("3333")
         
         if (response.ok) {
+          console.log("4444")
           document.getElementById('Anra_popupContent').style.display = 'none';
           document.getElementById('Anra_successAnimation').style.display = 'block';
           
           setTimeout(() => {
+            console.log("5555")
             closePopup();
             document.getElementById('Anra_notifyForm').reset();
             submitBtn.textContent = originalText;
@@ -742,13 +746,14 @@
             
             selectedVariantId = '';
           }, 2000);
+          console.log("6666")
         } else {
           throw new Error(data.message || 'Failed to submit');
         }
       })
       .catch((error) => {
         console.error('Error:', error);
-        alert(error.message || 'Something went wrong. Please try again.');
+        alert("", error.message || 'Something went wrong. Please try again.');
         submitBtn.textContent = originalText;
         submitBtn.disabled = false;
       });

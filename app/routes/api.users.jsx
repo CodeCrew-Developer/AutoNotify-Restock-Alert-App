@@ -54,20 +54,28 @@ export async function loader({ request }) {
 }
 
 export async function action({ request }) {
+  console.log("request: ", request.method)
+  const origin = request.headers.get("origin");
+  console.log("originMain: ", origin)
   try {
+    // if (request.method === "POST") {
       if (request.method === "OPTIONS") {
-        const origin = request.headers.get("origin");
-      // ✅ Handle CORS preflight properly
-      return new Response(null, {
-        status: 200,
-        headers: {
-           "Access-Control-Allow-Origin": origin || "*",
-          "Access-Control-Allow-Headers": "Content-Type",
+        // ✅ Handle CORS preflight properly
+        console.log("originOPTIONS: ", origin)
+        return new Response(null, {
+          status: 200,
+          headers: {
+            "Access-Control-Allow-Origin": origin || "*",
+            "Access-Control-Allow-Headers": "Content-Type",
           "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
         },
       });
+    } else {
+      console.log("Not A POST Method")
     }
     const data = await request.json();
+
+    console.log("data::: ", data)
    
 
     // Handle email flag update
@@ -199,7 +207,11 @@ export async function action({ request }) {
       (f) => !data[f] || data[f].toString().trim() === ""
     );
 
+
+
     if (missing.length > 0) {
+      console.log("originMissing: ", origin)
+      
       return new Response(
         JSON.stringify({
           error: "Missing required fields",
@@ -208,7 +220,7 @@ export async function action({ request }) {
         {
           status: 400,
           headers: {
-            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Origin": origin || "*",
             "Access-Control-Allow-Headers": "Content-Type",
             "Content-Type": "application/json",
           },
@@ -225,7 +237,7 @@ export async function action({ request }) {
       emailSent: 0,
       createdAt: data.createdAt || new Date().toISOString(),
     };
-
+    
     console.log("🆕 Creating user:", JSON.stringify(userData, null, 2));
     const newUser = await users.create(userData);
 
