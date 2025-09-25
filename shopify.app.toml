@@ -1,18 +1,21 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "e4dd5e6029b8c8456d0fe4bac8fb183d"
-name = "AutoNotify: Restock Alert"
+client_id = "0e839a831948915c25542d1cf0323533"
+name = "AutoNotify - Restock Alert"
 application_url = "https://autonotify-restock-alert.up.railway.app"
 embedded = true
 
-[access_scopes]
-scopes = "read_inventory,write_products,read_themes"
-
 [build]
-automatically_update_urls_on_dev = true
+automatically_update_urls_on_dev = false
 
 [webhooks]
-api_version = "2025-07"
+api_version = "2025-10"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_inventory,read_themes,write_products"
+
+
 
   [[webhooks.subscriptions]]
   topics = [ "app/scopes_update" ]

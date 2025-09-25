@@ -2,6 +2,7 @@ import users from "../modes/users";
 import { ShopSettings } from "../modes/users";
 
 export async function loader({ request }) {
+  console.log("getttttttttttttttttttttt")
   const url = new URL(request.url);
   const shopName = url.searchParams.get('shopName');
 
@@ -55,11 +56,12 @@ export async function loader({ request }) {
 export async function action({ request }) {
   try {
       if (request.method === "OPTIONS") {
+        const origin = request.headers.get("origin");
       // ✅ Handle CORS preflight properly
       return new Response(null, {
         status: 200,
         headers: {
-          "Access-Control-Allow-Origin": "*",
+           "Access-Control-Allow-Origin": origin || "*",
           "Access-Control-Allow-Headers": "Content-Type",
           "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
         },

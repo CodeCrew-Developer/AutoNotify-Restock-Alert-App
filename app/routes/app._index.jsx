@@ -392,7 +392,7 @@ export default function NotifyDashboard() {
                         : "#"
                     }
                     target="_blank"
-                    external="true"
+                    external="true" 
                   >
                     Add app block
                   </Button>

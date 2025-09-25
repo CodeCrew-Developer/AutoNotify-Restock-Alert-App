@@ -40,6 +40,7 @@ import { authenticate } from "../shopify.server";
 
 export const loader = async ({ request }) => {
   const API_ENDPOINT = process.env.SHOPIFY_APP_URL + "/api/users";
+  console.log("API_ENDPOINT",API_ENDPOINT)
   const appUrl = process.env.SHOPIFY_APP_URL;
 
   const { session, admin } = await authenticate.admin(request);
