@@ -632,6 +632,8 @@
     }
 
     variantSelector.addEventListener('change', function () {
+    console.log("variantSelector change")
+
       selectedVariantId = this.value;
       const selectedVariant = allVariants.find((v) => v.id === selectedVariantId);
 
@@ -789,6 +791,7 @@
   }
 
   document.addEventListener('change', function (event) {
+    console.log("document change", event.target.name, "=============",event.target.closest('form[data-type="add-to-cart-form"]') )
     if (event.target.name === 'id' && event.target.closest('form[data-type="add-to-cart-form"]')) {
       setTimeout(checkInitialStockStatus, 100);
     }
