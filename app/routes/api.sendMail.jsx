@@ -11,16 +11,18 @@ const transporter = nodemailer.createTransport({
   },
 });
 export async function action({ request }) {
-   const { admin } = await authenticate.admin(request);
+  const { admin } = await authenticate.admin(request);
   try {
     const data = await request.json();
-    
-    const { to = data.recipientEmail, subject, text, html = data.htmlTemplate } = data;
 
-   if (!to) {
+    const { recipientEmail, subject, text, htmlTemplate } = data;
+    const to = recipientEmail;
+    const html = htmlTemplate;
+
+    if (!to) {
       return cors(
         request,
-        json({ error: "Recipient email is required" }, { status: 400 })
+        json({ success: false, message: "Recipient email is required" }, { status: 400 })
       );
     }
 
@@ -32,15 +34,13 @@ export async function action({ request }) {
       html: html || "<b>Hello world?</b>",
     });
 
-    return cors(
-      request,
-      json({ success: true, messageId: info.messageId })
-    );
+    return cors(request, json({ success: true, messageId: info.messageId }));
   } catch (err) {
     console.error("Error sending mail:", err);
-   return cors(
+    return cors(
       request,
-      json({ success: false, error: err.message }, { status: 500 })
+      json({ success: false, message: err.message }, { status: 500 })
     );
   }
 }
+
