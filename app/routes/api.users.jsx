@@ -2,7 +2,7 @@
   import { ShopSettings } from "../modes/users";
   import { cors } from "remix-utils/cors";
   import { json } from "@remix-run/node";
-  export async function loader({ request }) {
+ export async function loader({ request }) {
 
        if (request.method === "OPTIONS") {
          console.log("loader request.method",request.method)
@@ -18,13 +18,11 @@
    
     const url = new URL(request.url);
     const shopName = url.searchParams.get("shopName");
-    console.log("shopName",shopName)
 
     try {
       let data;
       if (shopName) {
         data = await users.find({ shopName: shopName });
-        console.log("datadatadatadata", data = await users.find({ shopName: shopName }))
       } else {
         data = await users.find();
       }
@@ -36,7 +34,7 @@
 
       return await cors(
         request,
-        Response.json({
+        json({
           users: data,
           shopSettings: shopSettings,
         }),
