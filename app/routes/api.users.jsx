@@ -22,8 +22,8 @@ export async function loader({ request }) {
   const shopName = url.searchParams.get("shopName");
 
   try {
-    console.log("dataaaaaaaaaa",data)
     let data;
+    console.log("dataaaaaaaaaa",data)
     if (shopName) {
       data = await users.find({ shopName: shopName });
     } else {
