@@ -430,7 +430,7 @@ const CreateTemplateModal = ({
       }
 
       setToast("Test email sent successfully!");
-      setTimeout(() => setToast(""), 3000);
+      // setTimeout(() => setToast(""), 3000);
     } catch (error) {
       setErrors((prev) => ({ ...prev, test: error.message }));
     } finally {
