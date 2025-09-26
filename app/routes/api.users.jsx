@@ -36,7 +36,7 @@ export async function loader({ request }) {
 
     return await cors(
       request,
-      Response.json({
+      json({
         users: data,
         shopSettings: shopSettings,
       }),
@@ -96,7 +96,6 @@ export async function action({ request }) {
             status: 400,
             headers: {
               "Access-Control-Allow-Origin": "*",
-              "Access-Control-Allow-Headers": "Content-Type",
               "Content-Type": "application/json",
             },
           }
@@ -129,7 +128,6 @@ export async function action({ request }) {
             status: 404,
             headers: {
               "Access-Control-Allow-Origin": "*",
-              "Access-Control-Allow-Headers": "Content-Type",
               "Content-Type": "application/json",
             },
           }
@@ -170,7 +168,6 @@ export async function action({ request }) {
             status: 400,
             headers: {
               "Access-Control-Allow-Origin": "*",
-              "Access-Control-Allow-Headers": "Content-Type",
               "Content-Type": "application/json",
             },
           }
@@ -243,7 +240,7 @@ export async function action({ request }) {
 
     return await cors(
       request,
-      Response.json({
+      json({
         success: true,
         message: "Notification request received successfully",
         data: newUser,
