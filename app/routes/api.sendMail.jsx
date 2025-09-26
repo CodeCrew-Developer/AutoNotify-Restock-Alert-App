@@ -3,7 +3,7 @@ import nodemailer from "nodemailer";
 import { cors } from "remix-utils/cors";
 import { authenticate } from "../shopify.server";
 
-const transporter = nodemailer.createTransporter({
+const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
     user: process.env.EMAIL_USER,
