@@ -22,6 +22,7 @@ export async function loader({ request }) {
     let data;
     if (shopName) {
       data = await users.find({ shopName: shopName });
+      console.log("datadatadata",data = await users.find({ shopName: shopName }))
     } else {
       data = await users.find();
     }
