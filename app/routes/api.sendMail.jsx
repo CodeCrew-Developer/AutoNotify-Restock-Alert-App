@@ -14,9 +14,10 @@ export async function action({ request }) {
    const { admin } = await authenticate.admin(request);
   try {
     const data = await request.json();
+    console.log("datadata",data)
     
     const { to = data.recipientEmail, subject, text, html = data.htmlTemplate } = data;
-
+    console.log("totototototo",to)
    if (!to) {
       return cors(
         request,
@@ -31,6 +32,7 @@ export async function action({ request }) {
       text: text || "Hello world?",
       html: html || "<b>Hello world?</b>",
     });
+    console.log("infoinfoinfoinfo",info)
 
     return cors(
       request,
