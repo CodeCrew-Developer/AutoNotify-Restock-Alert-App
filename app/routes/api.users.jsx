@@ -1,6 +1,5 @@
   import users from "../modes/users";
   import { ShopSettings } from "../modes/users";
-  import { authenticate } from "../shopify.server";
   import { cors } from "remix-utils/cors";
 
   export async function loader({ request }) {
