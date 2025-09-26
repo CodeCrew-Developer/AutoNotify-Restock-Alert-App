@@ -63,14 +63,14 @@ export const loader = async ({ request }) => {
     const usersResponse = await fetch(
       `${API_ENDPOINT}?shopName=${encodeURIComponent(shopDetail.name)}`,
     );
-    console.log("usersResponseusersResponse",usersResponse)
+    
     if (usersResponse.ok) {
       const usersData = await usersResponse.json();
-      console.log("usersDataaaaa",usersData)
+      
       users = usersData.users || [];
-      console.log("usersData.users",usersData.users)
+     
       shopSettings = usersData.shopSettings;
-      console.log("shopSettings",shopSettings)
+      
     }
 
     const getWebhooks = await admin.graphql(GET_WEBHOOKS_QUERY, {
