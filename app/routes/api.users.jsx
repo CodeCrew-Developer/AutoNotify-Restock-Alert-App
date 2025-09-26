@@ -46,9 +46,22 @@
   }
 
   export async function action({ request }) {
-    
+   
+    console.log("request.method",request.method)
+    if (request.method === "OPTIONS") {
+    return new Response(null, {
+      status: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*", // Or your shop domain
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      },
+    });
+  }
     try {
       const data = await request.json();
+
+
 
       // Handle email flag update
       if (data.action === "updateEmailFlag") {
