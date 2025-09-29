@@ -2,15 +2,19 @@ import { json } from "@remix-run/node";
 import nodemailer from "nodemailer";
 import { authenticate } from "../shopify.server";
 import { cors } from "remix-utils/cors";
-
+ console.log(" process.env.SMTP_HOST", process.env.SMTP_HOST,process.env.SMTP_PORT)
+ console.log(" process.env.SMTP_PASS", process.env.EMAIL_USER,process.env.SMTP_PASS)
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: process.env.SMTP_HOST,
+  port: process.env.SMTP_PORT,
+  secure: false,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
 });
 export async function action({ request }) {
+ 
    const { admin } = await authenticate.admin(request);
   try {
     const data = await request.json();
