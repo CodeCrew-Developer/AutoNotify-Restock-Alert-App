@@ -7,7 +7,6 @@ import {
   DELETE_WEBHOOK_QUERY,
 } from "../constant/graphqlQueries";
 
-// Handle preflight OPTIONS request
 export const loader = async ({ request }) => {
   const response = new Response("Method not allowed", { status: 405 });
   return await cors(request, response);
@@ -17,25 +16,24 @@ export const action = async ({ request }) => {
   if (request.method !== "POST") {
     const response = new Response(
       JSON.stringify({ success: false, message: "Method not allowed" }),
-      { status: 405 }
+      { status: 405 },
     );
     return await cors(request, response);
   }
 
   try {
     const { session, admin } = await authenticate.admin(request);
-    
-    // Validate request body
+
     let body;
     try {
       body = await request.json();
     } catch (parseError) {
       const response = new Response(
-        JSON.stringify({ 
-          success: false, 
-          message: "Invalid JSON in request body" 
+        JSON.stringify({
+          success: false,
+          message: "Invalid JSON in request body",
         }),
-        { status: 400 }
+        { status: 400 },
       );
       return await cors(request, response);
     }
@@ -45,22 +43,22 @@ export const action = async ({ request }) => {
     // Validate required fields
     if (!requestAction) {
       const response = new Response(
-        JSON.stringify({ 
-          success: false, 
-          message: "Missing required field: action" 
+        JSON.stringify({
+          success: false,
+          message: "Missing required field: action",
         }),
-        { status: 400 }
+        { status: 400 },
       );
       return await cors(request, response);
     }
 
     if (requestAction === "create" && !appUrl) {
       const response = new Response(
-        JSON.stringify({ 
-          success: false, 
-          message: "Missing required field: appUrl for create action" 
+        JSON.stringify({
+          success: false,
+          message: "Missing required field: appUrl for create action",
         }),
-        { status: 400 }
+        { status: 400 },
       );
       return await cors(request, response);
     }
@@ -71,7 +69,7 @@ export const action = async ({ request }) => {
     });
 
     const resp = await getWebhooks.json();
-    
+
     // Check for GraphQL errors
     if (resp.errors) {
       console.error("GraphQL errors while fetching webhooks:", resp.errors);
@@ -81,7 +79,7 @@ export const action = async ({ request }) => {
           message: "Failed to fetch existing webhooks",
           errors: resp.errors,
         }),
-        { status: 500 }
+        { status: 500 },
       );
       return await cors(request, response);
     }
@@ -99,11 +97,14 @@ export const action = async ({ request }) => {
             },
           });
           const deleteResult = await deleteResponse.json();
-          
+
           if (deleteResult.errors) {
-            console.error(`Error deleting webhook ${webhookDetail.id}:`, deleteResult.errors);
+            console.error(
+              `Error deleting webhook ${webhookDetail.id}:`,
+              deleteResult.errors,
+            );
           }
-          
+
           return deleteResult;
         } catch (error) {
           console.error(`Failed to delete webhook:`, error);
@@ -128,14 +129,17 @@ export const action = async ({ request }) => {
         const createResult = await webhook.json();
 
         if (createResult.errors) {
-          console.error("GraphQL errors while creating webhook:", createResult.errors);
+          console.error(
+            "GraphQL errors while creating webhook:",
+            createResult.errors,
+          );
           const response = new Response(
             JSON.stringify({
               success: false,
               message: "Failed to create webhook due to GraphQL errors",
               errors: createResult.errors,
             }),
-            { status: 500 }
+            { status: 500 },
           );
           return await cors(request, response);
         }
@@ -145,9 +149,10 @@ export const action = async ({ request }) => {
             JSON.stringify({
               success: true,
               message: "Webhook created successfully",
-              webhook: createResult.data.webhookSubscriptionCreate.webhookSubscription,
+              webhook:
+                createResult.data.webhookSubscriptionCreate.webhookSubscription,
             }),
-            { status: 200 }
+            { status: 200 },
           );
           return await cors(request, response);
         } else {
@@ -155,9 +160,10 @@ export const action = async ({ request }) => {
             JSON.stringify({
               success: false,
               message: "Failed to create webhook",
-              errors: createResult.data?.webhookSubscriptionCreate?.userErrors || [],
+              errors:
+                createResult.data?.webhookSubscriptionCreate?.userErrors || [],
             }),
-            { status: 400 }
+            { status: 400 },
           );
           return await cors(request, response);
         }
@@ -169,7 +175,7 @@ export const action = async ({ request }) => {
             message: "Failed to create webhook",
             error: createError.message,
           }),
-          { status: 500 }
+          { status: 500 },
         );
         return await cors(request, response);
       }
@@ -181,7 +187,7 @@ export const action = async ({ request }) => {
       for (const edge of existingWebhooks) {
         try {
           const webhookDetail = edge.node;
-          
+
           // If appUrl is provided, only delete webhooks matching that URL
           if (appUrl && !webhookDetail.callbackUrl.includes(appUrl)) {
             continue;
@@ -194,11 +200,17 @@ export const action = async ({ request }) => {
           });
 
           const deleteResult = await deleteWebhook.json();
-          
+
           if (deleteResult.errors) {
-            console.error(`Error deleting webhook ${webhookDetail.id}:`, deleteResult.errors);
+            console.error(
+              `Error deleting webhook ${webhookDetail.id}:`,
+              deleteResult.errors,
+            );
             errors.push(...deleteResult.errors);
-          } else if (deleteResult.data?.webhookSubscriptionDelete?.deletedWebhookSubscriptionId) {
+          } else if (
+            deleteResult.data?.webhookSubscriptionDelete
+              ?.deletedWebhookSubscriptionId
+          ) {
             deletedCount++;
           }
         } catch (deleteError) {
@@ -214,7 +226,7 @@ export const action = async ({ request }) => {
           deletedCount,
           errors: errors.length > 0 ? errors : undefined,
         }),
-        { status: 200 }
+        { status: 200 },
       );
       return await cors(request, response);
     } else {
@@ -223,7 +235,7 @@ export const action = async ({ request }) => {
           success: false,
           message: "Invalid action. Supported actions: create, delete",
         }),
-        { status: 400 }
+        { status: 400 },
       );
       return await cors(request, response);
     }
@@ -236,7 +248,7 @@ export const action = async ({ request }) => {
         error: error.message,
         stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
       }),
-      { status: 500 }
+      { status: 500 },
     );
     return await cors(request, response);
   }
