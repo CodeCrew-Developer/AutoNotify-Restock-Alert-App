@@ -1,49 +1,56 @@
 import { json } from "@remix-run/node";
-import nodemailer from "nodemailer";
 import { authenticate } from "../shopify.server";
 import { cors } from "remix-utils/cors";
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: process.env.SMTP_PORT,
-  secure: true,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
 export async function action({ request }) {
- 
-   const { admin } = await authenticate.admin(request);
+  const { admin } = await authenticate.admin(request);
+
   try {
     const data = await request.json();
-    console.log("datadata",data)
-    
-    const { to = data.recipientEmail, subject, text, html = data.htmlTemplate } = data;
-    console.log("totototototo",to)
-   if (!to) {
+    console.log("datadata", data);
+
+    const { to = data.recipientEmail, subject, html = data.htmlTemplate } = data;
+    console.log("totototototo", to);
+
+    // ✅ Required field validation
+    if (!to || !subject || !html) {
       return cors(
         request,
-        json({ error: "Recipient email is required" }, { status: 400 })
+        json(
+          { error: "Fields 'to', 'subject' and 'html' are required" },
+          { status: 400 }
+        )
       );
     }
 
-    let info = await transporter.sendMail({
-      from: `"AutoNotify - Restock Alert" <${process.env.EMAIL_USER}>`,
-      to,
-      subject: subject || "Hello ✔",
-      text: text || "Hello world?",
-      html: html || "<b>Hello world?</b>",
-    });
-    console.log("infoinfoinfoinfo",info)
+    // ✅ Call external API instead of nodemailer
+    const response = await fetch(
+      process.env.MAILBASE_URL+"/api/auto-notify/sendMail",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": "abcd1234"
+        },
+        body: JSON.stringify({ to, subject, html }),
+      }
+    );
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Mail API failed: ${errText}`);
+    }
+
+    const result = await response.json();
+    console.log("mail api response", result);
 
     return cors(
       request,
-      json({ success: true, messageId: info.messageId })
+      json({ success: true, result })
     );
   } catch (err) {
     console.error("Error sending mail:", err);
-   return cors(
+    return cors(
       request,
       json({ success: false, error: err.message }, { status: 500 })
     );
