@@ -7,10 +7,10 @@ export async function action({ request }) {
 
   try {
     const data = await request.json();
-    console.log("datadata", data);
+    // console.log("datadata", data);
 
     const { to = data.recipientEmail, subject, html = data.htmlTemplate } = data;
-    console.log("totototototo", to);
+    // console.log("totototototo", to);
 
     // ✅ Required field validation
     if (!to || !subject || !html) {
@@ -42,7 +42,7 @@ export async function action({ request }) {
     }
 
     const result = await response.json();
-    console.log("mail api response", result);
+    // console.log("mail api response", result);
 
     return cors(
       request,

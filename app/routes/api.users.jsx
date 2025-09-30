@@ -4,7 +4,7 @@ import { cors } from "remix-utils/cors";
 
 export async function loader({ request }) {
   if (request.method === "OPTIONS") {
-    console.log("loader request.method", request.method);
+    // console.log("loader request.method", request.method);
     return new Response(null, {
       status: 200,
       headers: {
@@ -22,7 +22,7 @@ export async function loader({ request }) {
     let data;
     if (shopName) {
       data = await users.find({ shopName: shopName });
-      console.log("datadatadata",data = await users.find({ shopName: shopName }))
+      // console.log("datadatadata",data = await users.find({ shopName: shopName }))
     } else {
       data = await users.find();
     }
@@ -66,7 +66,7 @@ export async function loader({ request }) {
 }
 
 export async function action({ request }) {
-  console.log("request.method", request.method);
+  // console.log("request.method", request.method);
   
   if (request.method === "OPTIONS") {
     return new Response(null, {
@@ -142,10 +142,10 @@ export async function action({ request }) {
         );
       }
 
-      console.log(
-        "Email flag updated for user:",
-        JSON.stringify(updatedUser, null, 2),
-      );
+      // console.log(
+      //   "Email flag updated for user:",
+      //   JSON.stringify(updatedUser, null, 2),
+      // );
 
       return new Response(
         JSON.stringify({
@@ -249,7 +249,7 @@ export async function action({ request }) {
       createdAt: data.createdAt || new Date().toISOString(),
     };
 
-    console.log("🆕 Creating user:", JSON.stringify(userData, null, 2));
+    // console.log("🆕 Creating user:", JSON.stringify(userData, null, 2));
     const newUser = await users.create(userData);
 
     // Fixed: Use new Response() instead of deprecated json()

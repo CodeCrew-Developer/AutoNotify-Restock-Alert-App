@@ -63,12 +63,12 @@ export const loader = async ({ request }) => {
     const usersResponse = await fetch(
       `${API_ENDPOINT}?shopName=${encodeURIComponent(shopDetail.name)}`,
     );
-    console.log("usersResponse",usersResponse)
+    // console.log("usersResponse",usersResponse)
     if (usersResponse.ok) {
       const usersData = await usersResponse.json();
       
       users = usersData.users || [];
-      console.log("usersusersusers",users)
+      // console.log("usersusersusers",users)
      
       shopSettings = usersData.shopSettings;
       

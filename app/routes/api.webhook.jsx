@@ -123,21 +123,21 @@ async function sendRestockNotification(restockedVariants, shop, token) {
 
     const templateJson = await templateResponse.json();
     const templateData = templateJson?.data?.emailTemplates?.[0];
-    // console.log("templateData",templateData)
+    console.log("templateData",templateData)
     if (!templateData) throw new Error("No email template found for this shop");
 
     const usersResponse = await fetch(usersApi);
-    // console.log("usersResponseusersResponse", usersResponse);
+    console.log("usersResponseusersResponse", usersResponse);
     if (!usersResponse.ok) throw new Error("Failed to fetch users");
 
     const usersJson = await usersResponse.json();
-    // console.log("usersJsonusersJson", usersJson);
+    console.log("usersJsonusersJson", usersJson);
     
    
     const usersArray = usersJson.users || [];
 
-    // console.log("🔍 Users array length:", usersArray.length);
-    // console.log("🔍 Users array sample:", usersArray.slice(0, 2));
+    console.log("🔍 Users array length:", usersArray.length);
+    console.log("🔍 Users array sample:", usersArray.slice(0, 2));
     
     
     if (usersArray.length === 0) {
@@ -148,9 +148,9 @@ async function sendRestockNotification(restockedVariants, shop, token) {
           const allUsersJson = await allUsersResponse.json();
           const allUsers = allUsersJson.users || [];
           const distinctShops = [...new Set(allUsers.map(user => user.shopName))];
-          // console.log("🔍 Total users in database:", allUsers.length);
-          // console.log("🔍 Distinct shop names in database:", distinctShops);
-          // console.log("🔍 Looking for shop:", shop);
+          console.log("🔍 Total users in database:", allUsers.length);
+          console.log("🔍 Distinct shop names in database:", distinctShops);
+          console.log("🔍 Looking for shop:", shop);
         }
       } catch (debugError) {
         console.log("🔍 Debug fetch failed:", debugError.message);
@@ -192,7 +192,7 @@ async function sendRestockNotification(restockedVariants, shop, token) {
       });
     });
 
-    // console.log("🔍 Matching users found:", matchingUsers.length);
+    console.log("🔍 Matching users found:", matchingUsers.length);
 
     const now = Date.now();
     const recipientEmails = [];
@@ -218,12 +218,12 @@ async function sendRestockNotification(restockedVariants, shop, token) {
 
     if (recipientEmails.length === 0) {
       console.log("⚠️ No new recipients after cooldown filtering");
-      // console.log("🔍 Debug info:", {
-      //   totalUsersFromAPI: usersArray.length,
-      //   matchingUsers: matchingUsers.length,
-      //   restockedVariants: restockedVariants.length,
-      //   shopName: shop
-      // });
+      console.log("🔍 Debug info:", {
+        totalUsersFromAPI: usersArray.length,
+        matchingUsers: matchingUsers.length,
+        restockedVariants: restockedVariants.length,
+        shopName: shop
+      });
       return [];
     }
 
