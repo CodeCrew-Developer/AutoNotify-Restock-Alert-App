@@ -2,89 +2,93 @@ import users from "../modes/users";
 import { ShopSettings } from "../modes/users";
 import { cors } from "remix-utils/cors";
 
+const normalizeShopName = (shop) => shop.toLowerCase().trim();
+
 export async function loader({ request }) {
   if (request.method === "OPTIONS") {
-    // console.log("loader request.method", request.method);
     return new Response(null, {
       status: 200,
       headers: {
-        "Access-Control-Allow-Origin": "*", // Or your shop domain
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type",
       },
     });
   }
 
-  const url = new URL(request.url);
-  const shopName = url.searchParams.get("shopName");
+  let url = new URL(request.url);
+  let shopName = url.searchParams.get("shopName");
 
   try {
-    let data;
+    let data, shopSettings;
+
     if (shopName) {
-      data = await users.find({ shopName: shopName });
-      // console.log("datadatadata",data = await users.find({ shopName: shopName }))
+      const normalized = normalizeShopName(shopName);
+
+      data = await users.find({
+        shopName: new RegExp(`^${normalized}$`, "i"),
+      });
+
+      shopSettings = await ShopSettings.findOne({
+        shopName: new RegExp(`^${normalized}$`, "i"),
+      });
     } else {
       data = await users.find();
+      shopSettings = null;
     }
 
-    let shopSettings = null;
-    if (shopName) {
-      shopSettings = await ShopSettings.findOne({ shopName: shopName });
-    }
+    const response = {
+      users: data || [],
+      shopSettings: shopSettings || {},
+    };
 
-    return await cors(
+    return cors(
       request,
-      new Response(
-        JSON.stringify({
-          users: data,
-          shopSettings: shopSettings,
-        }),
-        {
-          status: 200,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      ),
+      new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
     );
   } catch (error) {
-    console.error("Error fetching users:", error);
-    return new Response(
-      JSON.stringify({
-        error: "Failed to fetch users",
-        message: error.message,
-      }),
-      {
-        status: 500,
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Content-Type": "application/json",
-        },
-      },
-    );
+    console.error("Error in loader:", error);
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }
 
 export async function action({ request }) {
-  // console.log("request.method", request.method);
-  
+  // ✅ Handle OPTIONS for CORS preflight
   if (request.method === "OPTIONS") {
     return new Response(null, {
       status: 200,
       headers: {
-        "Access-Control-Allow-Origin": "*", // Or your shop domain
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type",
       },
     });
   }
-  
+
   try {
     const data = await request.json();
+    console.log("📥 Received action request:", { 
+      method: request.method, 
+      action: data.action 
+    });
 
-    // Handle email flag update
-    if (data.action === "updateEmailFlag") {
+    // ✅ Handle PATCH for email flag update
+    if (request.method === "PATCH" || data.action === "updateEmailFlag") {
       const { email, productId, variantId, shopName, emailSent } = data;
+
+      console.log("🔄 Updating email flag with params:", {
+        email,
+        productId,
+        variantId,
+        shopName,
+        emailSent,
+      });
 
       if (
         !email ||
@@ -93,98 +97,140 @@ export async function action({ request }) {
         !shopName ||
         emailSent === undefined
       ) {
-        return new Response(
-          JSON.stringify({
-            error:
-              "Email, productId, variantId, shopName, and emailSent are required for flag update",
-          }),
-          {
-            status: 400,
-            headers: {
-              "Access-Control-Allow-Origin": "*",
-              "Access-Control-Allow-Headers": "Content-Type",
-              "Content-Type": "application/json",
-            },
-          },
+        return cors(
+          request,
+          new Response(
+            JSON.stringify({
+              error:
+                "Email, productId, variantId, shopName, and emailSent are required for flag update",
+            }),
+            {
+              status: 400,
+              headers: { "Content-Type": "application/json" },
+            }
+          )
         );
       }
 
-      // Update the user's emailSent flag
+      // ✅ Normalize and trim all values for matching
+      const normalizedEmail = email.toLowerCase().trim();
+      const normalizedProductId = productId.toString().trim();
+      const normalizedVariantId = variantId.toString().trim();
+      const normalizedShopName = shopName.toString().trim();
+
+      console.log("🔍 Searching for user with normalized values:", {
+        email: normalizedEmail,
+        productId: normalizedProductId,
+        variantId: normalizedVariantId,
+        shopName: normalizedShopName,
+      });
+
+      // ✅ First, find the user to debug
+      const existingUser = await users.findOne({
+        email: normalizedEmail,
+        productId: normalizedProductId,
+        variantId: normalizedVariantId,
+        shopName: new RegExp(`^${normalizedShopName}$`, "i"),
+      });
+
+      console.log("🔍 Found user:", existingUser ? "Yes" : "No");
+      if (existingUser) {
+        console.log("👤 User details:", {
+          _id: existingUser._id,
+          email: existingUser.email,
+          productId: existingUser.productId,
+          variantId: existingUser.variantId,
+          shopName: existingUser.shopName,
+          currentEmailSent: existingUser.emailSent,
+        });
+      }
+
+      // ✅ Update the user's emailSent flag with case-insensitive shop name
       const updatedUser = await users.findOneAndUpdate(
         {
-          email: email.toLowerCase().trim(),
-          productId: productId.toString().trim(),
-          variantId: variantId.toString().trim(),
-          shopName: shopName.toString(),
+          email: normalizedEmail,
+          productId: normalizedProductId,
+          variantId: normalizedVariantId,
+          shopName: new RegExp(`^${normalizedShopName}$`, "i"),
         },
         {
           emailSent: emailSent,
+          updatedAt: new Date().toISOString(),
         },
         {
           new: true,
-        },
+        }
       );
 
       if (!updatedUser) {
-        return new Response(
-          JSON.stringify({
-            error: "User not found",
-            message: "No user found with the provided criteria",
-          }),
-          {
-            status: 404,
-            headers: {
-              "Access-Control-Allow-Origin": "*",
-              "Access-Control-Allow-Headers": "Content-Type",
-              "Content-Type": "application/json",
-            },
-          },
+        console.error("❌ User not found for update. Attempted with:", {
+          email: normalizedEmail,
+          productId: normalizedProductId,
+          variantId: normalizedVariantId,
+          shopName: normalizedShopName,
+        });
+
+        return cors(
+          request,
+          new Response(
+            JSON.stringify({
+              error: "User not found",
+              message: "No user found with the provided criteria",
+              searchedWith: {
+                email: normalizedEmail,
+                productId: normalizedProductId,
+                variantId: normalizedVariantId,
+                shopName: normalizedShopName,
+              },
+            }),
+            {
+              status: 404,
+              headers: { "Content-Type": "application/json" },
+            }
+          )
         );
       }
 
-      // console.log(
-      //   "Email flag updated for user:",
-      //   JSON.stringify(updatedUser, null, 2),
-      // );
+      console.log("✅ Email flag updated successfully:", {
+        email: updatedUser.email,
+        newEmailSent: updatedUser.emailSent,
+      });
 
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message: "Email flag updated successfully",
-          user: updatedUser,
-        }),
-        {
-          status: 200,
-          headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Headers": "Content-Type",
-            "Content-Type": "application/json",
-          },
-        },
+      return cors(
+        request,
+        new Response(
+          JSON.stringify({
+            success: true,
+            message: "Email flag updated successfully",
+            user: updatedUser,
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }
+        )
       );
     }
 
-    // Handle shop settings update
+    // ✅ Handle shop settings update
     if (data.action === "updateShopSettings") {
       const { shopName, autoEmailGloballyEnabled, webhookActive } = data;
 
       if (!shopName) {
-        return new Response(
-          JSON.stringify({
-            error: "Shop name is required for settings update",
-          }),
-          {
-            status: 400,
-            headers: {
-              "Access-Control-Allow-Origin": "*",
-              "Access-Control-Allow-Headers": "Content-Type",
-              "Content-Type": "application/json",
-            },
-          },
+        return cors(
+          request,
+          new Response(
+            JSON.stringify({
+              error: "Shop name is required for settings update",
+            }),
+            {
+              status: 400,
+              headers: { "Content-Type": "application/json" },
+            }
+          )
         );
       }
 
-      // Update or create shop settings
       const shopSettings = await ShopSettings.findOneAndUpdate(
         { shopName: shopName },
         {
@@ -192,37 +238,35 @@ export async function action({ request }) {
           webhookActive: webhookActive,
         },
         {
-          upsert: true, // Create if doesn't exist
-          new: true, // Return updated document
-        },
+          upsert: true,
+          new: true,
+        }
       );
 
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message: "Shop settings updated successfully",
-          shopSettings: shopSettings,
-        }),
-        {
-          status: 200,
-          headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Headers": "Content-Type",
-            "Content-Type": "application/json",
-          },
-        },
+      return cors(
+        request,
+        new Response(
+          JSON.stringify({
+            success: true,
+            message: "Shop settings updated successfully",
+            shopSettings: shopSettings,
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }
+        )
       );
     }
 
-    // ✅ Required fields check
+    // ✅ Handle POST - Create new user
     const requiredFields = ["email", "productId", "variantId", "shopName"];
     const missing = requiredFields.filter(
-      (f) => !data[f] || data[f].toString().trim() === "",
+      (f) => !data[f] || data[f].toString().trim() === ""
     );
 
     if (missing.length > 0) {
-      // Fixed: Use new Response() instead of deprecated json()
-      return await cors(
+      return cors(
         request,
         new Response(
           JSON.stringify({
@@ -231,29 +275,25 @@ export async function action({ request }) {
           }),
           {
             status: 400,
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
           }
-        ),
+        )
       );
     }
 
-    // ✅ Normalize + set default emailSent flag
     const userData = {
       email: data.email.toLowerCase().trim(),
       productId: data.productId.toString().trim(),
       variantId: data.variantId.toString().trim(),
-      shopName: data.shopName,
+      shopName: normalizeShopName(data.shopName),
       emailSent: 0,
       createdAt: data.createdAt || new Date().toISOString(),
     };
 
-    // console.log("🆕 Creating user:", JSON.stringify(userData, null, 2));
+    console.log("🆕 Creating user:", userData);
     const newUser = await users.create(userData);
 
-    // Fixed: Use new Response() instead of deprecated json()
-    return await cors(
+    return cors(
       request,
       new Response(
         JSON.stringify({
@@ -263,27 +303,24 @@ export async function action({ request }) {
         }),
         {
           status: 200,
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
         }
-      ),
+      )
     );
   } catch (error) {
-    console.error("❌ Error in POST:", error);
-    return new Response(
-      JSON.stringify({
-        error: "Internal server error",
-        message: error.message,
-      }),
-      {
-        status: 500,
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Headers": "Content-Type",
-          "Content-Type": "application/json",
-        },
-      },
+    console.error("❌ Error in action:", error);
+    return cors(
+      request,
+      new Response(
+        JSON.stringify({
+          error: "Internal server error",
+          message: error.message,
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
+      )
     );
   }
 }

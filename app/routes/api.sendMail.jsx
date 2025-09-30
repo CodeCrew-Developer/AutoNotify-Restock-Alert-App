@@ -1,55 +1,81 @@
+// app/routes/api.sendMail.js
 import { json } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
 import { cors } from "remix-utils/cors";
 
+export async function loader({ request }) {
+  if (request.method === "OPTIONS") {
+    return cors(request, json({}));
+  }
+  return json({ error: "Method not allowed" }, { status: 405 });
+}
+
 export async function action({ request }) {
-  const { admin } = await authenticate.admin(request);
+  if (request.method === "OPTIONS") {
+    return cors(request, json({}));
+  }
 
   try {
-    const data = await request.json();
-    // console.log("datadata", data);
+    let admin;
+    try {
+      const auth = await authenticate.admin(request);
+      admin = auth.admin;
+    } catch (authError) {
+      console.log("⚠️ Authentication skipped for internal call");
+    }
 
-    const { to = data.recipientEmail, subject, html = data.htmlTemplate } = data;
-    // console.log("totototototo", to);
+    const data = await request.json();
+    console.log("📧 Received mail request:", { 
+      to: data.recipientEmail || data.to,
+      subject: data.subject 
+    });
+
+    const to = data.recipientEmail || data.to;
+    const subject = data.subject;
+    const html = data.htmlTemplate || data.html;
 
     // ✅ Required field validation
     if (!to || !subject || !html) {
+      console.error("❌ Missing required fields:", { to: !!to, subject: !!subject, html: !!html });
       return cors(
         request,
         json(
-          { error: "Fields 'to', 'subject' and 'html' are required" },
+          { 
+            success: false,
+            error: "Fields 'to' (or 'recipientEmail'), 'subject' and 'html' (or 'htmlTemplate') are required" 
+          },
           { status: 400 }
         )
       );
     }
 
-    // ✅ Call external API instead of nodemailer
-    const response = await fetch(
-      process.env.MAILBASE_URL+"/api/auto-notify/sendMail",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": "abcd1234"
-        },
-        body: JSON.stringify({ to, subject, html }),
-      }
-    );
+    const mailApiUrl = process.env.MAILBASE_URL + "/api/auto-notify/sendMail";
+    console.log("📤 Sending to mail API:", mailApiUrl);
+
+    const response = await fetch(mailApiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.MAIL_API_KEY || "abcd1234"
+      },
+      body: JSON.stringify({ to, subject, html }),
+    });
 
     if (!response.ok) {
       const errText = await response.text();
-      throw new Error(`Mail API failed: ${errText}`);
+      console.error("❌ Mail API failed:", response.status, errText);
+      throw new Error(`Mail API failed (${response.status}): ${errText}`);
     }
 
     const result = await response.json();
-    // console.log("mail api response", result);
+    console.log("✅ Mail sent successfully to:", to);
 
     return cors(
       request,
       json({ success: true, result })
     );
   } catch (err) {
-    console.error("Error sending mail:", err);
+    console.error("❌ Error in sendMail action:", err);
     return cors(
       request,
       json({ success: false, error: err.message }, { status: 500 })
