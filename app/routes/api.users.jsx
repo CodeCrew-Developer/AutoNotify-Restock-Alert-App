@@ -73,22 +73,13 @@ export async function action({ request }) {
 
   try {
     const data = await request.json();
-    console.log("📥 Received action request:", { 
-      method: request.method, 
-      action: data.action 
-    });
+   
 
     // ✅ Handle PATCH for email flag update
     if (request.method === "PATCH" || data.action === "updateEmailFlag") {
       const { email, productId, variantId, shopName, emailSent } = data;
 
-      console.log("🔄 Updating email flag with params:", {
-        email,
-        productId,
-        variantId,
-        shopName,
-        emailSent,
-      });
+     
 
       if (
         !email ||
@@ -118,12 +109,7 @@ export async function action({ request }) {
       const normalizedVariantId = variantId.toString().trim();
       const normalizedShopName = shopName.toString().trim();
 
-      console.log("🔍 Searching for user with normalized values:", {
-        email: normalizedEmail,
-        productId: normalizedProductId,
-        variantId: normalizedVariantId,
-        shopName: normalizedShopName,
-      });
+     
 
       // ✅ First, find the user to debug
       const existingUser = await users.findOne({
@@ -133,7 +119,6 @@ export async function action({ request }) {
         shopName: new RegExp(`^${normalizedShopName}$`, "i"),
       });
 
-      console.log("🔍 Found user:", existingUser ? "Yes" : "No");
       if (existingUser) {
         console.log("👤 User details:", {
           _id: existingUser._id,

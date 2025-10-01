@@ -25,16 +25,12 @@ export async function action({ request }) {
     }
 
     const data = await request.json();
-    console.log("📧 Received mail request:", { 
-      to: data.recipientEmail || data.to,
-      subject: data.subject 
-    });
+   
 
     const to = data.recipientEmail || data.to;
     const subject = data.subject;
     const html = data.htmlTemplate || data.html;
 
-    // ✅ Required field validation
     if (!to || !subject || !html) {
       console.error("❌ Missing required fields:", { to: !!to, subject: !!subject, html: !!html });
       return cors(
@@ -50,7 +46,6 @@ export async function action({ request }) {
     }
 
     const mailApiUrl = process.env.MAILBASE_URL + "/api/auto-notify/sendMail";
-    console.log("📤 Sending to mail API:", mailApiUrl);
 
     const response = await fetch(mailApiUrl, {
       method: "POST",
@@ -68,7 +63,6 @@ export async function action({ request }) {
     }
 
     const result = await response.json();
-    console.log("✅ Mail sent successfully to:", to);
 
     return cors(
       request,

@@ -107,18 +107,16 @@ async function sendRestockNotification(restockedVariants, shop, token) {
   }
 
   const cleanShopName = extractShopName(shop);
-  console.log("🔍 Original shop:", shop);
-  console.log("🔍 Clean shop name:", cleanShopName);
+  // console.log("🔍 Original shop:", shop);
+  // console.log("🔍 Clean shop name:", cleanShopName);
 
-  // ✅ FIXED: Changed from ?shop= to ?shopName= to match your backend API
   const templateApi = `${process.env.SHOPIFY_APP_URL}/api/email_template?shopName=${encodeURIComponent(shop)}`;
   const usersApi = `${process.env.SHOPIFY_APP_URL}/api/users?shopName=${encodeURIComponent(cleanShopName)}`;
   
-  console.log("📍 Template API:", templateApi);
-  console.log("📍 Users API:", usersApi);
+  // console.log("📍 Template API:", templateApi);
+  // console.log("📍 Users API:", usersApi);
 
   try {
-    // Fetch template
     const templateResponse = await fetch(templateApi);
 
     if (!templateResponse.ok) {
@@ -127,18 +125,17 @@ async function sendRestockNotification(restockedVariants, shop, token) {
     }
 
     const templateJson = await templateResponse.json();
-    console.log("📦 Template response:", {
-      success: templateJson.success,
-      hasData: !!templateJson.data,
-      templateCount: templateJson.data?.emailTemplates?.length || 0
-    });
+    // console.log("📦 Template response:", {
+    //   success: templateJson.success,
+    //   hasData: !!templateJson.data,
+    //   templateCount: templateJson.data?.emailTemplates?.length || 0
+    // });
 
     const templateData = templateJson?.data?.emailTemplates?.[0];
     
     if (!templateData) {
       console.error("❌ No email template found for shop:", shop);
       
-      // Debug: Check what templates exist
       const allTemplatesResponse = await fetch(
         `${process.env.SHOPIFY_APP_URL}/api/email_template`
       );
@@ -146,13 +143,12 @@ async function sendRestockNotification(restockedVariants, shop, token) {
         const allTemplates = await allTemplatesResponse.json();
         const availableShops = allTemplates.data?.emailTemplates?.map(t => t.shopName) || [];
         console.log("📋 Available template shops:", availableShops);
-        console.log("🔍 Looking for:", shop);
+        // console.log("🔍 Looking for:", shop);
       }
       
       throw new Error("No email template found for this shop");
     }
 
-    // ✅ Verify template matches the requested shop
     if (templateData.shopName !== shop) {
       console.error("❌ Template shop mismatch!");
       console.error("   Requested:", shop);
@@ -162,7 +158,6 @@ async function sendRestockNotification(restockedVariants, shop, token) {
 
     console.log("✅ Template verified for:", templateData.shopName);
     
-    // Fetch users
     const usersResponse = await fetch(usersApi);
     
     if (!usersResponse.ok) {
@@ -173,8 +168,8 @@ async function sendRestockNotification(restockedVariants, shop, token) {
     const usersJson = await usersResponse.json();
     const usersArray = usersJson.users || [];
 
-    console.log("🔍 Users array length:", usersArray.length);
-    console.log("🔍 Users array sample:", usersArray.slice(0, 2));
+    // console.log("🔍 Users array length:", usersArray.length);
+    // console.log("🔍 Users array sample:", usersArray.slice(0, 2));
     
     if (usersArray.length === 0) {
       console.log("🔍 No users found for shop, checking all users...");
@@ -184,16 +179,15 @@ async function sendRestockNotification(restockedVariants, shop, token) {
           const allUsersJson = await allUsersResponse.json();
           const allUsers = allUsersJson.users || [];
           const distinctShops = [...new Set(allUsers.map(user => user.shopName))];
-          console.log("🔍 Total users in database:", allUsers.length);
+          // console.log("🔍 Total users in database:", allUsers.length);
           console.log("🔍 Distinct shop names in database:", distinctShops);
-          console.log("🔍 Looking for shop:", shop);
+          // console.log("🔍 Looking for shop:", shop);
         }
       } catch (debugError) {
         console.log("🔍 Debug fetch failed:", debugError.message);
       }
     }
 
-    // Fetch variant details
     const inventoryToVariantDetails = new Map();
     for (const variant of restockedVariants) {
       const details = await fetchVariantDetailsFromInventoryId(
@@ -261,7 +255,6 @@ async function sendRestockNotification(restockedVariants, shop, token) {
       return [];
     }
 
-    // Build email HTML
     const itemsHtml = restockedVariants
       .map((variant) => {
         const details = inventoryToVariantDetails.get(variant.inventory_item_id);
@@ -306,7 +299,6 @@ async function sendRestockNotification(restockedVariants, shop, token) {
 
     const successfullyNotifiedEmails = [];
 
-    // Send emails
     for (let i = 0; i < recipientEmails.length; i++) {
       const email = recipientEmails[i];
       const user = usersToUpdate[i];
@@ -346,7 +338,6 @@ async function sendRestockNotification(restockedVariants, shop, token) {
         console.error(`❌ Exception sending to ${email}:`, emailError.message);
       }
       
-      // Add small delay to avoid rate limiting
       if (i < recipientEmails.length - 1) {
         await new Promise(resolve => setTimeout(resolve, 100));
       }
@@ -434,10 +425,14 @@ async function fetchVariantDetailsFromInventoryId(
     const variant = result?.data?.inventoryItem?.variant;
     if (!variant) return null;
 
+    // placeholder image fallback
+    const placeholderImage =
+      "https://via.placeholder.com/300?text=No+Image+Available";
+
     const imageSrc =
       variant.image?.originalSrc ||
       variant.product?.featuredImage?.originalSrc ||
-      "";
+      placeholderImage;
 
     const variantIdMatch = String(variant.id).match(/(\d+)$/);
     const numericVariantId = variantIdMatch ? variantIdMatch[1] : null;
