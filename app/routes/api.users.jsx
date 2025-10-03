@@ -47,7 +47,7 @@ export async function loader({ request }) {
       new Response(JSON.stringify(response), {
         status: 200,
         headers: { "Content-Type": "application/json" },
-      })
+      }),
     );
   } catch (error) {
     console.error("Error in loader:", error);
@@ -73,13 +73,10 @@ export async function action({ request }) {
 
   try {
     const data = await request.json();
-   
 
     // ✅ Handle PATCH for email flag update
     if (request.method === "PATCH" || data.action === "updateEmailFlag") {
       const { email, productId, variantId, shopName, emailSent } = data;
-
-     
 
       if (
         !email ||
@@ -98,8 +95,8 @@ export async function action({ request }) {
             {
               status: 400,
               headers: { "Content-Type": "application/json" },
-            }
-          )
+            },
+          ),
         );
       }
 
@@ -108,8 +105,6 @@ export async function action({ request }) {
       const normalizedProductId = productId.toString().trim();
       const normalizedVariantId = variantId.toString().trim();
       const normalizedShopName = shopName.toString().trim();
-
-     
 
       // ✅ First, find the user to debug
       const existingUser = await users.findOne({
@@ -144,7 +139,7 @@ export async function action({ request }) {
         },
         {
           new: true,
-        }
+        },
       );
 
       if (!updatedUser) {
@@ -171,8 +166,8 @@ export async function action({ request }) {
             {
               status: 404,
               headers: { "Content-Type": "application/json" },
-            }
-          )
+            },
+          ),
         );
       }
 
@@ -192,8 +187,8 @@ export async function action({ request }) {
           {
             status: 200,
             headers: { "Content-Type": "application/json" },
-          }
-        )
+          },
+        ),
       );
     }
 
@@ -211,8 +206,8 @@ export async function action({ request }) {
             {
               status: 400,
               headers: { "Content-Type": "application/json" },
-            }
-          )
+            },
+          ),
         );
       }
 
@@ -225,7 +220,7 @@ export async function action({ request }) {
         {
           upsert: true,
           new: true,
-        }
+        },
       );
 
       return cors(
@@ -239,15 +234,16 @@ export async function action({ request }) {
           {
             status: 200,
             headers: { "Content-Type": "application/json" },
-          }
-        )
+          },
+        ),
       );
     }
 
     // ✅ Handle POST - Create new user
+    // ✅ Handle POST - Create new user
     const requiredFields = ["email", "productId", "variantId", "shopName"];
     const missing = requiredFields.filter(
-      (f) => !data[f] || data[f].toString().trim() === ""
+      (f) => !data[f] || data[f].toString().trim() === "",
     );
 
     if (missing.length > 0) {
@@ -261,8 +257,8 @@ export async function action({ request }) {
           {
             status: 400,
             headers: { "Content-Type": "application/json" },
-          }
-        )
+          },
+        ),
       );
     }
 
@@ -275,22 +271,33 @@ export async function action({ request }) {
       createdAt: data.createdAt || new Date().toISOString(),
     };
 
-    console.log("🆕 Creating user:", userData);
-    const newUser = await users.create(userData);
+    console.log("🆕 Creating/Updating user:", userData);
+
+    // ✅ Prevent duplicate error by using upsert
+    const newUser = await users.findOneAndUpdate(
+      {
+        email: userData.email,
+        productId: userData.productId,
+        variantId: userData.variantId,
+        shopName: userData.shopName,
+      },
+      { $setOnInsert: userData }, // insert only if not exists
+      { upsert: true, new: true },
+    );
 
     return cors(
       request,
       new Response(
         JSON.stringify({
           success: true,
-          message: "Notification request received successfully",
+          message: "Notification request processed successfully",
           data: newUser,
         }),
         {
           status: 200,
           headers: { "Content-Type": "application/json" },
-        }
-      )
+        },
+      ),
     );
   } catch (error) {
     console.error("❌ Error in action:", error);
@@ -304,8 +311,8 @@ export async function action({ request }) {
         {
           status: 500,
           headers: { "Content-Type": "application/json" },
-        }
-      )
+        },
+      ),
     );
   }
 }
