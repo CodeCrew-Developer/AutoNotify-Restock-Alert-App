@@ -107,16 +107,36 @@ async function sendRestockNotification(restockedVariants, shop, token) {
   }
 
   const cleanShopName = extractShopName(shop);
-  // console.log("🔍 Original shop:", shop);
-  // console.log("🔍 Clean shop name:", cleanShopName);
 
   const templateApi = `${process.env.SHOPIFY_APP_URL}/api/email_template?shopName=${encodeURIComponent(shop)}`;
   const usersApi = `${process.env.SHOPIFY_APP_URL}/api/users?shopName=${encodeURIComponent(cleanShopName)}`;
   
-  // console.log("📍 Template API:", templateApi);
-  // console.log("📍 Users API:", usersApi);
-
   try {
+    // ✅ FETCH USERS AND SHOP SETTINGS
+    const usersResponse = await fetch(usersApi);
+    
+    if (!usersResponse.ok) {
+      console.error("❌ Users fetch failed:", usersResponse.status);
+      throw new Error("Failed to fetch users");
+    }
+
+    const usersJson = await usersResponse.json();
+    // console.log("usersJsonusersJson111usersJson", usersJson.users);
+    
+    const usersArray = usersJson.users || [];
+    const shopSettings = usersJson.shopSettings || {};
+    // console.log("shopSettings",shopSettings)
+
+    // ✅ CHECK IF AUTO-EMAIL IS ENABLED FOR THIS SHOP
+    if (!shopSettings.autoEmailGloballyEnabled) {
+      console.log(`⚠️ Auto-email is disabled for shop: ${shop}`);
+      console.log("🔍 Shop settings:", shopSettings);
+      return [];
+    }
+
+    // console.log("✅ Auto-email is enabled for shop:", shop);
+
+    // FETCH EMAIL TEMPLATE
     const templateResponse = await fetch(templateApi);
 
     if (!templateResponse.ok) {
@@ -125,11 +145,6 @@ async function sendRestockNotification(restockedVariants, shop, token) {
     }
 
     const templateJson = await templateResponse.json();
-    // console.log("📦 Template response:", {
-    //   success: templateJson.success,
-    //   hasData: !!templateJson.data,
-    //   templateCount: templateJson.data?.emailTemplates?.length || 0
-    // });
 
     const templateData = templateJson?.data?.emailTemplates?.[0];
     
@@ -142,8 +157,7 @@ async function sendRestockNotification(restockedVariants, shop, token) {
       if (allTemplatesResponse.ok) {
         const allTemplates = await allTemplatesResponse.json();
         const availableShops = allTemplates.data?.emailTemplates?.map(t => t.shopName) || [];
-        console.log("📋 Available template shops:", availableShops);
-        // console.log("🔍 Looking for:", shop);
+        // console.log("📋 Available template shops:", availableShops);
       }
       
       throw new Error("No email template found for this shop");
@@ -156,33 +170,17 @@ async function sendRestockNotification(restockedVariants, shop, token) {
       throw new Error(`Template mismatch: got ${templateData.shopName} instead of ${shop}`);
     }
 
-    console.log("✅ Template verified for:", templateData.shopName);
-    
-    const usersResponse = await fetch(usersApi);
-    
-    if (!usersResponse.ok) {
-      console.error("❌ Users fetch failed:", usersResponse.status);
-      throw new Error("Failed to fetch users");
-    }
-
-    const usersJson = await usersResponse.json();
-    console.log("usersJsonusersJson111usersJson",usersJson.users)
-    const usersArray = usersJson.users || [];
-
-    // console.log("🔍 Users array length:", usersArray.length);
-    // console.log("🔍 Users array sample:", usersArray.slice(0, 2));
+    // console.log("✅ Template verified for:", templateData.shopName);
     
     if (usersArray.length === 0) {
-      console.log("🔍 No users found for shop, checking all users...");
+      // console.log("🔍 No users found for shop, checking all users...");
       try {
         const allUsersResponse = await fetch(`${process.env.SHOPIFY_APP_URL}/api/users`);
         if (allUsersResponse.ok) {
           const allUsersJson = await allUsersResponse.json();
           const allUsers = allUsersJson.users || [];
           const distinctShops = [...new Set(allUsers.map(user => user.shopName))];
-          // console.log("🔍 Total users in database:", allUsers.length);
-          console.log("🔍 Distinct shop names in database:", distinctShops);
-          // console.log("🔍 Looking for shop:", shop);
+          // console.log("🔍 Distinct shop names in database:", distinctShops);
         }
       } catch (debugError) {
         console.log("🔍 Debug fetch failed:", debugError.message);
@@ -251,7 +249,8 @@ async function sendRestockNotification(restockedVariants, shop, token) {
         totalUsersFromAPI: usersArray.length,
         matchingUsers: matchingUsers.length,
         restockedVariants: restockedVariants.length,
-        shopName: shop
+        shopName: shop,
+        autoEmailEnabled: shopSettings.autoEmailGloballyEnabled
       });
       return [];
     }
@@ -305,7 +304,7 @@ async function sendRestockNotification(restockedVariants, shop, token) {
       const user = usersToUpdate[i];
 
       try {
-        console.log(`📧 Attempting to send email to: ${email}`);
+        // console.log(`📧 Attempting to send email to: ${email}`);
         
         const response = await fetch(
           process.env.SHOPIFY_APP_URL + "/api/sendMail",
