@@ -300,7 +300,7 @@ export default function NotifyDashboard() {
                   </InlineStack>
                   <Button
                     variant="secondary"
-                    url={`https://admin.shopify.com/store/${storeDomain}/themes/${themeId}/editor?context=apps&activateAppId=${appId}/${blockType}`}
+                    url={`https://admin.shopify.com/store/${storeDomain}/themes/${themeId}/editor?context=apps&activateAppId=0e839a831948915c25542d1cf0323533/${blockType}`}
                     target="_blank"
                   >
                     Disable
