@@ -66,12 +66,11 @@ export const loader = async ({ request }) => {
     // console.log("usersResponse",usersResponse)
     if (usersResponse.ok) {
       const usersData = await usersResponse.json();
-      
+
       users = usersData.users || [];
       // console.log("usersusersusers",users)
-     
+
       shopSettings = usersData.shopSettings;
-      
     }
 
     const getWebhooks = await admin.graphql(GET_WEBHOOKS_QUERY, {
@@ -121,6 +120,8 @@ export default function EnhancedUsersPage() {
   const [selectedTab, setSelectedTab] = React.useState(0);
   const [currentPage, setCurrentPage] = React.useState(1);
   const [itemsPerPage] = React.useState(10);
+  const [sortColumn, setSortColumn] = React.useState(null);
+  const [sortDirection, setSortDirection] = React.useState("ascending");
 
   React.useEffect(() => {
     const timer = setTimeout(() => {
@@ -248,30 +249,78 @@ export default function EnhancedUsersPage() {
     }
   };
 
+  const getSortedUsers = (usersToSort) => {
+    if (!sortColumn && sortColumn !== 0) return usersToSort;
+
+    return [...usersToSort].sort((a, b) => {
+      let aValue, bValue;
+
+      switch (sortColumn) {
+        case 0: // Subscriber Details (email)
+          aValue = (a.email || "").toLowerCase();
+          bValue = (b.email || "").toLowerCase();
+          break;
+        case 1: // Product Information (variantId)
+          aValue = (a.variantId || "").toLowerCase();
+          bValue = (b.variantId || "").toLowerCase();
+          break;
+        case 2: // Email Status
+          aValue = a.emailSent || 0;
+          bValue = b.emailSent || 0;
+          break;
+        case 3: // Timeline (createdAt)
+          aValue = new Date(a.createdAt).getTime();
+          bValue = new Date(b.createdAt).getTime();
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return sortDirection === "ascending" ? -1 : 1;
+      if (aValue > bValue) return sortDirection === "ascending" ? 1 : -1;
+      return 0;
+    });
+  };
+
+  const handleSort = (index) => {
+    if (sortColumn === index) {
+      setSortDirection(
+        sortDirection === "ascending" ? "descending" : "ascending",
+      );
+    } else {
+      setSortColumn(index);
+      setSortDirection("ascending");
+    }
+    setCurrentPage(1);
+  };
+
   const getCurrentPageUsers = () => {
     const tabFilteredUsers = getFilteredUsersByTab();
+    const sortedUsers = getSortedUsers(tabFilteredUsers);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    return tabFilteredUsers.slice(startIndex, endIndex);
+    return sortedUsers.slice(startIndex, endIndex);
   };
 
   const tabFilteredUsers = getFilteredUsersByTab();
   const totalPages = Math.ceil(tabFilteredUsers.length / itemsPerPage);
   const currentUsers = getCurrentPageUsers();
 
-  const totalEmailsSent = users.reduce(
+  const totalEmailsSent = filteredUsers.reduce(
     (total, user) => total + (user.emailSent || 0),
     0,
   );
-  const usersWithEmailsSent = users.filter((user) => user.emailSent > 0).length;
-  const pendingUsers = users.filter(
+  const usersWithEmailsSent = filteredUsers.filter(
+    (user) => user.emailSent > 0,
+  ).length;
+  const pendingUsers = filteredUsers.filter(
     (user) => (user.emailSent || 0) === 0,
   ).length;
 
   const tabs = [
     {
       id: "all-users",
-      content: `All Users (${users.length})`,
+      content: `All Users (${filteredUsers.length})`,
       accessibilityLabel: "All users",
       panelID: "all-users-content",
     },
@@ -385,7 +434,6 @@ export default function EnhancedUsersPage() {
       value: users.length.toString(),
       icon: PersonSegmentIcon,
       tone: "success",
-      
       bgColor: "bg-fill-success-secondary",
     },
     {
@@ -393,7 +441,6 @@ export default function EnhancedUsersPage() {
       value: totalEmailsSent.toString(),
       icon: EmailIcon,
       tone: "info",
-      
       bgColor: "bg-fill-info-secondary",
     },
     {
@@ -476,7 +523,6 @@ export default function EnhancedUsersPage() {
 
         <Divider />
 
-        {/* Banner Skeleton */}
         <div
           style={{
             padding: "16px",
@@ -491,7 +537,6 @@ export default function EnhancedUsersPage() {
           </BlockStack>
         </div>
 
-        {/* Search and Filter Bar Skeleton */}
         <InlineStack gap="400" align="space-between" wrap={false}>
           <div
             style={{
@@ -537,7 +582,6 @@ export default function EnhancedUsersPage() {
   const TableSkeleton = () => (
     <Card padding="0">
       <BlockStack gap="0">
-        {/* Header Skeleton */}
         <div style={{ padding: "24px 24px 0 24px" }}>
           <InlineStack align="space-between" blockAlign="center">
             <BlockStack gap="100">
@@ -548,7 +592,6 @@ export default function EnhancedUsersPage() {
           </InlineStack>
         </div>
 
-        {/* Tabs Skeleton */}
         <div style={{ padding: "0 24px" }}>
           <InlineStack gap="400" blockAlign="center">
             <div
@@ -580,10 +623,8 @@ export default function EnhancedUsersPage() {
           <Divider />
         </div>
 
-        {/* Table Content Skeleton */}
         <div style={{ padding: "0 24px 24px 24px" }}>
           <BlockStack gap="200">
-            {/* Table Headers */}
             <InlineStack gap="400" align="space-between">
               <SkeletonDisplayText size="small" />
               <SkeletonDisplayText size="small" />
@@ -594,11 +635,9 @@ export default function EnhancedUsersPage() {
 
             <Divider />
 
-            {/* Table Rows */}
             {[1, 2, 3, 4, 5].map((row) => (
               <div key={row} style={{ padding: "16px 0" }}>
                 <InlineStack gap="400" align="space-between">
-                  {/* Subscriber Details Column */}
                   <InlineStack gap="300" blockAlign="center">
                     <div
                       style={{
@@ -613,12 +652,10 @@ export default function EnhancedUsersPage() {
                     </BlockStack>
                   </InlineStack>
 
-                  {/* Product Information Column */}
                   <BlockStack gap="100">
                     <SkeletonDisplayText size="small" />
                   </BlockStack>
 
-                  {/* Email Status Column */}
                   <InlineStack gap="300" blockAlign="center">
                     <div
                       style={{
@@ -641,13 +678,11 @@ export default function EnhancedUsersPage() {
                     </BlockStack>
                   </InlineStack>
 
-                  {/* Timeline Column */}
                   <BlockStack gap="100">
                     <SkeletonDisplayText size="small" />
                     <SkeletonBodyText lines={1} />
                   </BlockStack>
 
-                  {/* System Status Column */}
                   <div
                     style={{
                       width: "100px",
@@ -661,7 +696,6 @@ export default function EnhancedUsersPage() {
               </div>
             ))}
 
-            {/* Pagination Skeleton */}
             <Box paddingBlockStart="400">
               <InlineStack align="center" gap="200">
                 <div
@@ -709,7 +743,6 @@ export default function EnhancedUsersPage() {
               </>
             ) : (
               <>
-                {/* Enhanced Stats Cards with better design */}
                 <Box paddingBlockEnd="600">
                   <Grid columns={3} gap="400">
                     {statsCards.map((stat, index) => (
@@ -756,7 +789,6 @@ export default function EnhancedUsersPage() {
                   </Grid>
                 </Box>
 
-                {/* Enhanced Action Bar */}
                 <Card padding="500">
                   <BlockStack gap="400">
                     <InlineStack align="space-between" gap="400">
@@ -795,7 +827,6 @@ export default function EnhancedUsersPage() {
 
                     <Divider />
 
-                    {/* Enhanced System Status Banner */}
                     <Banner
                       title={`Auto-email system is ${webhookExists ? "active" : "inactive"}`}
                       tone={webhookExists ? "success" : "warning"}
@@ -815,7 +846,6 @@ export default function EnhancedUsersPage() {
                       </BlockStack>
                     </Banner>
 
-                    {/* Enhanced Search and Filter Bar */}
                     <InlineStack gap="400" align="space-between" wrap={false}>
                       <div style={{ minWidth: "350px", flexGrow: 1 }}>
                         <TextField
@@ -842,10 +872,8 @@ export default function EnhancedUsersPage() {
                   </BlockStack>
                 </Card>
 
-                {/* Enhanced Users Data Table with Tabs and Pagination */}
                 <Card padding="0">
                   <BlockStack gap="0">
-                    {/* Header */}
                     <div style={{ padding: "24px 24px 0 24px" }}>
                       <InlineStack align="space-between" blockAlign="center">
                         <BlockStack gap="100">
@@ -865,8 +893,7 @@ export default function EnhancedUsersPage() {
                       </InlineStack>
                     </div>
 
-                    {/* Tabs */}
-                    <div style={{ padding: "0 24px" }}>
+                    <div style={{ padding: "0 10px" }}>
                       <Tabs
                         tabs={tabs}
                         selected={selectedTab}
@@ -874,7 +901,6 @@ export default function EnhancedUsersPage() {
                       />
                     </div>
 
-                    {/* Table Content */}
                     <div style={{ padding: "0 24px 24px 24px" }}>
                       {tabFilteredUsers.length > 0 ? (
                         <BlockStack gap="400">
@@ -895,12 +921,14 @@ export default function EnhancedUsersPage() {
                             ]}
                             rows={userRows}
                             sortable={[true, true, true, true, false]}
+                            defaultSortDirection={sortDirection}
+                            initialSortColumnIndex={sortColumn}
+                            onSort={handleSort}
                             increasedTableDensity={false}
                             verticalAlign="middle"
                             hoverable
                           />
 
-                          {/* Pagination */}
                           {totalPages > 1 && (
                             <Box paddingBlockStart="400">
                               <InlineStack align="center">
@@ -972,7 +1000,6 @@ export default function EnhancedUsersPage() {
           </Layout.Section>
         </Layout>
 
-        {/* Template Modal */}
         <CreateTemplateModal
           email={data.email}
           showTemplateEditor={showTemplateEditor}

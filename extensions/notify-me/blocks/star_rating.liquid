@@ -439,7 +439,7 @@
             <option value="" disabled selected>Select a variant</option>
             <!-- Options will be populated by JavaScript -->
           </select>
-          <div id="Anra_stockStatus" class="Anra_stock-status"></div>
+          
         </div>
 
         <div class="Anra_form-group">
@@ -840,52 +840,58 @@
     }
 
     function populateVariantSelector() {
-      const variantSelector = document.getElementById('Anra_variantSelector');
-      const stockStatus = document.getElementById('Anra_stockStatus');
+  const variantSelector = document.getElementById('Anra_variantSelector');
+  
+  if (!variantSelector) return;
 
-      if (!variantSelector) return;
+  while (variantSelector.options.length > 1) {
+    variantSelector.remove(1);
+  }
 
-      while (variantSelector.options.length > 1) {
-        variantSelector.remove(1);
-      }
+  // Only show variants that are out of stock AND have DENY policy
+  const outOfStockVariants = allVariants.filter((variant) => {
+    const isOutOfStock = variant.quantity === 0 || !variant.available;
+    const isDenyPolicy = variant.inventoryPolicy === 'DENY';
+    
+    // Only include variants that are out of stock AND have deny policy
+    return isOutOfStock && isDenyPolicy;
+  });
 
-      const outOfStockVariants = allVariants.filter((variant) => !variant.available);
+  console.log('Out of stock variants with DENY policy:', outOfStockVariants);
 
-      if (outOfStockVariants.length === 0) {
-        variantSelector.options[0].textContent = 'All variants are in stock';
-        return;
-      }
+  if (outOfStockVariants.length === 0) {
+    variantSelector.options[0].textContent = 'All variants are in stock';
+    return;
+  }
 
-      variantSelector.options[0].textContent = 'Select an out-of-stock variant';
+  variantSelector.options[0].textContent = 'Select an out-of-stock variant';
 
-      outOfStockVariants.forEach((variant) => {
-        const option = document.createElement('option');
-        option.value = variant.id;
-        option.textContent = variant.title;
-        option.classList.add('Anra_out-of-stock');
-        variantSelector.appendChild(option);
-      });
+  outOfStockVariants.forEach((variant) => {
+    const option = document.createElement('option');
+    option.value = variant.id;
+    option.textContent = variant.title;
+    option.classList.add('Anra_out-of-stock');
+    variantSelector.appendChild(option);
+  });
 
-      if (outOfStockVariants.length === 1) {
-        variantSelector.value = outOfStockVariants[0].id;
-        selectedVariantId = outOfStockVariants[0].id;
-        if (stockStatus) {
-          stockStatus.textContent = 'Out of stock';
-          stockStatus.style.color = '#f44336';
-        }
-        variantSelector.parentElement.style.display = 'none';
-      }
+  if (outOfStockVariants.length === 1) {
+    variantSelector.value = outOfStockVariants[0].id;
+    selectedVariantId = outOfStockVariants[0].id;
+    variantSelector.parentElement.style.display = 'none';
+  }
 
-      variantSelector.addEventListener('change', function () {
-        selectedVariantId = this.value;
-        const selectedVariant = allVariants.find((v) => v.id === selectedVariantId);
-
-        if (selectedVariant && stockStatus) {
-          stockStatus.textContent = 'Out of stock';
-          stockStatus.style.color = '#f44336';
-        }
-      });
+  variantSelector.addEventListener('change', function () {
+    selectedVariantId = this.value;
+    const selectedVariant = allVariants.find((v) => v.id == selectedVariantId);
+    
+    if (selectedVariant) {
+      const isOutOfStock = selectedVariant.quantity === 0 || !selectedVariant.available;
+      const isDenyPolicy = selectedVariant.inventoryPolicy === 'DENY';
+      
+      console.log('Selected variant:', selectedVariant.title, 'Out of stock:', isOutOfStock, 'Deny policy:', isDenyPolicy);
     }
+  });
+}
 
     function checkInitialStockStatus() {
       const variantId = getProductform();
