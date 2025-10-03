@@ -318,7 +318,7 @@ export default function NotifyDashboard() {
                   </Text>
                   <Button
                     variant="primary"
-                    url={`https://admin.shopify.com/store/${storeDomain}/themes/${themeId}/editor?context=apps&activateAppId=${appId}/${blockType}&autoActivate=true`}
+                    url={`https://admin.shopify.com/store/${storeDomain}/themes/${themeId}/editor?context=apps&activateAppId=${appId}/${blockType}`}
                     target="_blank"
                   >
                     Enable
