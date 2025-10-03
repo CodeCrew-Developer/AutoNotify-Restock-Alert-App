@@ -385,7 +385,7 @@ export default function EnhancedUsersPage() {
       value: users.length.toString(),
       icon: PersonSegmentIcon,
       tone: "success",
-      trend: `${users.length} active subscription${users.length !== 1 ? "s" : ""}`,
+      
       bgColor: "bg-fill-success-secondary",
     },
     {
@@ -393,7 +393,7 @@ export default function EnhancedUsersPage() {
       value: totalEmailsSent.toString(),
       icon: EmailIcon,
       tone: "info",
-      trend: `${usersWithEmailsSent} users notified`,
+      
       bgColor: "bg-fill-info-secondary",
     },
     {

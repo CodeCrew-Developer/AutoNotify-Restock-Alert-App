@@ -19,9 +19,7 @@ import { useCallback, useEffect, useState } from "react";
 
 const DEFAULT_TEMPLATE = {
   subject: "NOW! The product you subscribed is now restocked!",
-  fromEmail: "psychoecokocrow@gmail.com",
-  fromName: "Jaydeep learning store",
-  post: "default_bert",
+  
   headingColor: "#000000",
   headingContent: "Back to Stock",
   logoImage: null,
@@ -247,8 +245,7 @@ const CreateTemplateModal = ({
   const validateTemplate = useCallback(() => {
     const required = [
       ["subject", "Subject"],
-      ["fromEmail", "From email"],
-      ["fromName", "From name"],
+     
       ["headingContent", "Heading content"],
       ["message", "Message"],
       ["productName", "Product name"],
@@ -257,13 +254,7 @@ const CreateTemplateModal = ({
       ["copyright", "Copyright"],
     ];
 
-    const errors = required
-      .filter(([key]) => !templateData[key]?.trim())
-      .map(([, label]) => `${label} is required`);
-
-    if (templateData.fromEmail && !EMAIL_REGEX.test(templateData.fromEmail)) {
-      errors.push("Invalid email format");
-    }
+    
 
     return errors;
   }, [templateData]);
@@ -416,8 +407,8 @@ const CreateTemplateModal = ({
         body: JSON.stringify({
           recipientEmail: testEmail,
           subject: templateData.subject,
-          fromEmail: templateData.fromEmail,
-          fromName: templateData.fromName,
+          
+         
           htmlTemplate: generateHTML(),
           shopName,
           timestamp: new Date().toISOString(),
@@ -535,22 +526,8 @@ const CreateTemplateModal = ({
                       value={templateData.subject}
                       onChange={(v) => updateTemplate("subject", v)}
                     />
-                    <TextField
-                      label="Send from"
-                      value={templateData.fromEmail}
-                      onChange={(v) => updateTemplate("fromEmail", v)}
-                      type="email"
-                    />
-                    <TextField
-                      label="From name"
-                      value={templateData.fromName}
-                      onChange={(v) => updateTemplate("fromName", v)}
-                    />
-                    <TextField
-                      label="Post"
-                      value={templateData.post}
-                      onChange={(v) => updateTemplate("post", v)}
-                    />
+                   
+                    
                   </BlockStack>
                 </Card>
 
@@ -866,16 +843,8 @@ const CreateTemplateModal = ({
                         </Text>
                         <Divider />
                       </BlockStack>
-                      <BlockStack gap="100">
-                        <Text variant="bodyMd">
-                          <strong>From:</strong> {templateData.fromName} &lt;
-                          {templateData.fromEmail}&gt;
-                        </Text>
-                        <Text variant="bodyMd">
-                          <strong>Post:</strong> {templateData.post}
-                        </Text>
-                      </BlockStack>
-                      <Divider />
+                     
+                     
                       <Box
                         padding="300"
                         background="bg-surface"

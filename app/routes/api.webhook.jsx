@@ -166,6 +166,7 @@ async function sendRestockNotification(restockedVariants, shop, token) {
     }
 
     const usersJson = await usersResponse.json();
+    console.log("usersJsonusersJson111usersJson",usersJson.users)
     const usersArray = usersJson.users || [];
 
     // console.log("🔍 Users array length:", usersArray.length);

@@ -404,7 +404,7 @@
     }
   }
 </style>
-<div id="Anra_stock-locator-variant-id" style="display:none;">{{product.selected_or_first_available_variant.id}} </div>
+<div id="Anra_stock-locator-variant-id" style="display:none;">{{ product.selected_or_first_available_variant.id }}</div>
 <div class="Anra_popup-container">
   <div class="Anra_btn-container product-form__buttons Anra_loading" id="Anra_inventory-info-button">
     <button
@@ -468,237 +468,240 @@
 </div>
 
 <script>
-(function() {
+  (function () {
     'use strict';
 
     const VARIANT_SELECTORS = [
-        '[name="id"]',                   
-        '[name="variant_id"]',        
-        '[data-variant-id]',              
-        '.product-variant-id',           
-        '.variant-selector',             
-        '.product-form__variant-select',  
-        '.variant-input',                
-        '.single-option-selector',       
-        '.product-form__input',          
-        'input[type="hidden"][name="id"]', 
-        'select.product-form__input',     
-        '[data-product-select]',        
-        '.js-variant-selector'          
+      '[name="id"]',
+      '[name="variant_id"]',
+      '[data-variant-id]',
+      '.product-variant-id',
+      '.variant-selector',
+      '.product-form__variant-select',
+      '.variant-input',
+      '.single-option-selector',
+      '.product-form__input',
+      'input[type="hidden"][name="id"]',
+      'select.product-form__input',
+      '[data-product-select]',
+      '.js-variant-selector',
     ];
 
     let lastVariantId = null;
 
     function getCurrentVariantId() {
-        const form = document.querySelector('form[action*="/cart/add"]');
-        if (!form) {
-            console.log('Form not found');
-            return null;
-        }
-
-        for (const selector of VARIANT_SELECTORS) {
-            const element = form.querySelector(selector);
-            if (element && element.value) {
-                // console.log('Found variant via selector:', selector, '=', element.value);
-                return element.value;
-            }
-        }
-
-        const variantInputs = form.querySelectorAll('input, select');
-        for (const input of variantInputs) {
-            const name = input.name?.toLowerCase() || '';
-            const id = input.id?.toLowerCase() || '';
-            const className = input.className?.toLowerCase() || '';
-            const dataAttrs = Array.from(input.attributes)
-                .map(attr => attr.name.toLowerCase())
-                .join(' ');
-
-            if (
-                (name.includes('id') || name.includes('variant')) ||
-                (id.includes('variant') || id.includes('product')) ||
-                (className.includes('variant') || className.includes('product')) ||
-                (dataAttrs.includes('variant') || dataAttrs.includes('product'))
-            ) {
-                if (input.value && input.value !== '') {
-                    // console.log('Found variant via fallback:', input.name || input.id, '=', input.value);
-                    return input.value;
-                }
-            }
-        }
-
-        const radioGroups = {};
-        const radios = form.querySelectorAll('input[type="radio"]:checked');
-        radios.forEach(radio => {
-            if (radio.name.includes('option') || radio.name.includes('variant')) {
-                radioGroups[radio.name] = radio.value;
-            }
-        });
-
-        if (Object.keys(radioGroups).length > 0) {
-            const hiddenVariant = form.querySelector('input[type="hidden"]');
-            if (hiddenVariant && hiddenVariant.value) {
-                // console.log('Found variant via radio group:', hiddenVariant.value);
-                return hiddenVariant.value;
-            }
-        }
-
-        console.log('No variant ID found');
+      const form = document.querySelector('form[action*="/cart/add"]');
+      if (!form) {
+        console.log('Form not found');
         return null;
+      }
+
+      for (const selector of VARIANT_SELECTORS) {
+        const element = form.querySelector(selector);
+        if (element && element.value) {
+          // console.log('Found variant via selector:', selector, '=', element.value);
+          return element.value;
+        }
+      }
+
+      const variantInputs = form.querySelectorAll('input, select');
+      for (const input of variantInputs) {
+        const name = input.name?.toLowerCase() || '';
+        const id = input.id?.toLowerCase() || '';
+        const className = input.className?.toLowerCase() || '';
+        const dataAttrs = Array.from(input.attributes)
+          .map((attr) => attr.name.toLowerCase())
+          .join(' ');
+
+        if (
+          name.includes('id') ||
+          name.includes('variant') ||
+          id.includes('variant') ||
+          id.includes('product') ||
+          className.includes('variant') ||
+          className.includes('product') ||
+          dataAttrs.includes('variant') ||
+          dataAttrs.includes('product')
+        ) {
+          if (input.value && input.value !== '') {
+            // console.log('Found variant via fallback:', input.name || input.id, '=', input.value);
+            return input.value;
+          }
+        }
+      }
+
+      const radioGroups = {};
+      const radios = form.querySelectorAll('input[type="radio"]:checked');
+      radios.forEach((radio) => {
+        if (radio.name.includes('option') || radio.name.includes('variant')) {
+          radioGroups[radio.name] = radio.value;
+        }
+      });
+
+      if (Object.keys(radioGroups).length > 0) {
+        const hiddenVariant = form.querySelector('input[type="hidden"]');
+        if (hiddenVariant && hiddenVariant.value) {
+          // console.log('Found variant via radio group:', hiddenVariant.value);
+          return hiddenVariant.value;
+        }
+      }
+
+      console.log('No variant ID found');
+      return null;
     }
 
     function handleVariantChange(source = 'unknown') {
-        // console.log('handleVariantChange triggered by:', source);
-        
-        const variantId = getCurrentVariantId();
-        
-        if (variantId && variantId !== lastVariantId) {
-            // console.log('Variant changed from', lastVariantId, 'to', variantId);
-            lastVariantId = variantId;
-            
-            const variantSelector = document.querySelector('#Anra_stock-locator-variant-id');
-            if (variantSelector) {
-                variantSelector.textContent = variantId;
-            }
-            
-            window.dispatchEvent(new CustomEvent('variantChanged', {
-                detail: { 
-                    variantId: variantId,
-                    source: source
-                }
-            }));
-            
+      // console.log('handleVariantChange triggered by:', source);
+
+      const variantId = getCurrentVariantId();
+
+      if (variantId && variantId !== lastVariantId) {
+        // console.log('Variant changed from', lastVariantId, 'to', variantId);
+        lastVariantId = variantId;
+
+        const variantSelector = document.querySelector('#Anra_stock-locator-variant-id');
+        if (variantSelector) {
+          variantSelector.textContent = variantId;
         }
+
+        window.dispatchEvent(
+          new CustomEvent('variantChanged', {
+            detail: {
+              variantId: variantId,
+              source: source,
+            },
+          })
+        );
+      }
     }
 
     function attachEventListeners() {
-        const form = document.querySelector('form[action*="/cart/add"]');
-        if (!form) {
-            console.log('Product form not found');
-            return;
-        }
+      const form = document.querySelector('form[action*="/cart/add"]');
+      if (!form) {
+        console.log('Product form not found');
+        return;
+      }
 
-       
-        const themeEvents = [
-            'variant:change',
-            'variantChange', 
-            'variant-change',
-            'product:variant-change',
-            'theme:variant:change'
-        ];
+      const themeEvents = [
+        'variant:change',
+        'variantChange',
+        'variant-change',
+        'product:variant-change',
+        'theme:variant:change',
+      ];
 
-        themeEvents.forEach(eventName => {
-            form.addEventListener(eventName, function(event) {
-                if (event.detail && event.detail.variant) {
-                    lastVariantId = event.detail.variant.id;
-                    window.dispatchEvent(new CustomEvent('variantChanged', {
-                        detail: { 
-                            variantId: event.detail.variant.id,
-                            source: eventName
-                        }
-                    }));
-                } else {
-                    handleVariantChange(eventName);
-                }
-            });
+      themeEvents.forEach((eventName) => {
+        form.addEventListener(eventName, function (event) {
+          if (event.detail && event.detail.variant) {
+            lastVariantId = event.detail.variant.id;
+            window.dispatchEvent(
+              new CustomEvent('variantChanged', {
+                detail: {
+                  variantId: event.detail.variant.id,
+                  source: eventName,
+                },
+              })
+            );
+          } else {
+            handleVariantChange(eventName);
+          }
         });
+      });
 
-        VARIANT_SELECTORS.forEach(selector => {
-            const elements = form.querySelectorAll(selector);
-            elements.forEach(element => {
-                element.addEventListener('change', () => {
-                    handleVariantChange(selector);
-                });
-            });
+      VARIANT_SELECTORS.forEach((selector) => {
+        const elements = form.querySelectorAll(selector);
+        elements.forEach((element) => {
+          element.addEventListener('change', () => {
+            handleVariantChange(selector);
+          });
         });
+      });
 
-        form.addEventListener('change', function(event) {
-            setTimeout(() => handleVariantChange('form-change'), 10);
+      form.addEventListener('change', function (event) {
+        setTimeout(() => handleVariantChange('form-change'), 10);
+      });
+
+      const clickableVariants = form.querySelectorAll(
+        '.variant-option, .color-swatch, .size-option, [data-variant], .product-option, .product-form__input label'
+      );
+
+      clickableVariants.forEach((element) => {
+        element.addEventListener('click', function () {
+          setTimeout(() => handleVariantChange('click'), 50);
         });
-
-        const clickableVariants = form.querySelectorAll(
-            '.variant-option, .color-swatch, .size-option, [data-variant], .product-option, .product-form__input label'
-        );
-        
-        clickableVariants.forEach(element => {
-            element.addEventListener('click', function() {
-                setTimeout(() => handleVariantChange('click'), 50);
-            });
-        });
-
+      });
     }
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(() => {
-                attachEventListeners();
-                handleVariantChange('initial-load');
-            }, 100);
-        });
-    } else {
+      document.addEventListener('DOMContentLoaded', function () {
         setTimeout(() => {
-            attachEventListeners();
-            handleVariantChange('initial-load');
+          attachEventListeners();
+          handleVariantChange('initial-load');
         }, 100);
+      });
+    } else {
+      setTimeout(() => {
+        attachEventListeners();
+        handleVariantChange('initial-load');
+      }, 100);
     }
 
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.addedNodes.length) {
-                const hasForm = Array.from(mutation.addedNodes).some(node => 
-                    node.nodeType === 1 && 
-                    (node.matches('form[action*="/cart/add"]') || 
-                     node.querySelector('form[action*="/cart/add"]'))
-                );
-                if (hasForm) {
-                    setTimeout(() => {
-                        attachEventListeners();
-                        handleVariantChange('observer');
-                    }, 100);
-                }
-            }
-        });
+    const observer = new MutationObserver(function (mutations) {
+      mutations.forEach(function (mutation) {
+        if (mutation.addedNodes.length) {
+          const hasForm = Array.from(mutation.addedNodes).some(
+            (node) =>
+              node.nodeType === 1 &&
+              (node.matches('form[action*="/cart/add"]') || node.querySelector('form[action*="/cart/add"]'))
+          );
+          if (hasForm) {
+            setTimeout(() => {
+              attachEventListeners();
+              handleVariantChange('observer');
+            }, 100);
+          }
+        }
+      });
     });
 
     observer.observe(document.body, {
-        childList: true,
-        subtree: true
+      childList: true,
+      subtree: true,
     });
+  })();
 
-})();
-
-
-(function() {
+  (function () {
     'use strict';
 
     if (window.ANRA_INITIALIZED) {
-        console.log('Script already initialized, skipping...');
-        return;
+      console.log('Script already initialized, skipping...');
+      return;
     }
     window.ANRA_INITIALIZED = true;
 
     const inventoryQuery = `
-      query fetchShopifyInventoryByVariant($variantId: ID!) {
-        productVariant(id: $variantId) {
-          id
-          title
-          product {
-            id
-            title
-            variants(first: 50) {
-              edges {
-                node {
-                  id
-                  title
-                  inventoryItem {                  
-                    id
-                    inventoryLevels(first: 10) {
-                      edges {
-                        node {
-                          quantities(names:["available"]) {
-                            name
-                            quantity
-                          }
-                        }
+  query fetchShopifyInventoryByVariant($variantId: ID!) {
+    productVariant(id: $variantId) {
+      id
+      title
+      inventoryPolicy
+      product {
+        id
+        title
+        variants(first: 50) {
+          edges {
+            node {
+              id
+              title
+              inventoryPolicy
+              inventoryItem {                  
+                id
+                inventoryLevels(first: 10) {
+                  edges {
+                    node {
+                      quantities(names: ["available"]) {
+                        name
+                        quantity
                       }
                     }
                   }
@@ -708,7 +711,9 @@
           }
         }
       }
-    `;
+    }
+  }
+`;
 
     const shopDomain = '{{shop.domain}}';
     const shopName = '{{shop.name}}';
@@ -722,14 +727,13 @@
     let lastCheckedVariantId = null;
 
     async function fetchShopifyInventoryByVariant(variantId) {
-      
       if (lastCheckedVariantId === variantId && allVariants.length > 0) {
         updateUIForCurrentVariant(variantId);
         return;
       }
-      
+
       lastCheckedVariantId = variantId;
-      
+
       const shopifyUrl = `https://${shopDomain}/admin/api/2024-07/graphql.json`;
       const headers = {
         'Content-Type': 'application/json',
@@ -748,6 +752,7 @@
         }
 
         const responseData = await response.json();
+        // console.log('responseData', responseData);
 
         if (responseData.data?.productVariant?.product?.variants?.edges) {
           if (responseData.data.productVariant?.product?.id) {
@@ -757,7 +762,7 @@
           allVariants = responseData.data.productVariant.product.variants.edges.map((edge) => {
             const variant = edge.node;
             let availableQuantity = 0;
-            
+
             if (variant.inventoryItem?.inventoryLevels?.edges) {
               variant.inventoryItem.inventoryLevels.edges.forEach((level) => {
                 if (level.node.quantities) {
@@ -775,6 +780,7 @@
               title: variant.title,
               available: availableQuantity > 0,
               quantity: availableQuantity,
+              inventoryPolicy: variant.inventoryPolicy, 
             };
           });
 
@@ -793,29 +799,28 @@
     }
 
     function updateUIForCurrentVariant(variantId) {
-     
-      
-      const currentVariant = allVariants.find(v => v.id === variantId);
-      
+      const currentVariant = allVariants.find((v) => v.id === variantId);
+
       if (!currentVariant) {
         console.log('ERROR: Current variant not found in data');
         hideNotifyButton();
         return;
       }
+
       
-     
-      
-      if (currentVariant.quantity === 0 || !currentVariant.available) {
+      const isOutOfStock = currentVariant.quantity === 0 || !currentVariant.available;
+      const isDenyPolicy = currentVariant.inventoryPolicy === 'DENY';
+
+      if (isOutOfStock && isDenyPolicy) {
         showNotifyButton();
       } else {
         hideNotifyButton();
       }
-      
     }
 
     function showNotifyButton() {
       const btnContainer = document.getElementById('Anra_inventory-info-button');
-      
+
       if (btnContainer) {
         btnContainer.classList.remove('Anra_loading');
         btnContainer.classList.add('Anra_show');
@@ -826,7 +831,7 @@
 
     function hideNotifyButton() {
       const btnContainer = document.getElementById('Anra_inventory-info-button');
-      
+
       if (btnContainer) {
         btnContainer.classList.remove('Anra_loading', 'Anra_show');
       } else {
@@ -835,7 +840,6 @@
     }
 
     function populateVariantSelector() {
-
       const variantSelector = document.getElementById('Anra_variantSelector');
       const stockStatus = document.getElementById('Anra_stockStatus');
 
@@ -884,18 +888,16 @@
     }
 
     function checkInitialStockStatus() {
-
       const variantId = getProductform();
-      
+
       if (variantId) {
-        const fullVariantId = variantId.includes('gid://shopify/ProductVariant/') 
-          ? variantId 
+        const fullVariantId = variantId.includes('gid://shopify/ProductVariant/')
+          ? variantId
           : `gid://shopify/ProductVariant/${variantId}`;
         fetchShopifyInventoryByVariant(fullVariantId);
       } else {
         hideNotifyButton();
       }
-      
     }
 
     function getProductform() {
@@ -904,20 +906,20 @@
         'form[action*="/cart/add"] input[name="id"]',
         'form[action*="/cart/add"] select[name="id"]',
         'form.product-form input[name="id"]',
-        '[name="id"][form]'
+        '[name="id"][form]',
       ];
-      
+
       for (const selector of selectors) {
         const element = document.querySelector(selector);
         if (element && element.value) {
           return element.value;
         }
       }
-      
+
       return null;
     }
 
-    window.openPopup = function() {
+    window.openPopup = function () {
       if (!hasOutOfStockVariants) {
         console.log('Cannot open popup - no out-of-stock variants');
         return;
@@ -938,7 +940,7 @@
       }, 10);
     };
 
-    window.closePopup = function() {
+    window.closePopup = function () {
       // console.log('closePopup');
       const popupOverlay = document.getElementById('Anra_popupOverlay');
       const popupModal = document.querySelector('.Anra_popup-modal');
@@ -955,7 +957,7 @@
       }, 500);
     };
 
-    window.handleSubmit = function(event) {
+    window.handleSubmit = function (event) {
       // console.log('handleSubmit');
       event.preventDefault();
 
@@ -1031,11 +1033,11 @@
       }
     });
 
-    window.addEventListener('variantChanged', function(event) {
+    window.addEventListener('variantChanged', function (event) {
       // console.log('Custom variant change event received:', event.detail);
       if (event.detail && event.detail.variantId) {
-        const fullVariantId = event.detail.variantId.includes('gid://shopify/ProductVariant/') 
-          ? event.detail.variantId 
+        const fullVariantId = event.detail.variantId.includes('gid://shopify/ProductVariant/')
+          ? event.detail.variantId
           : `gid://shopify/ProductVariant/${event.detail.variantId}`;
         fetchShopifyInventoryByVariant(fullVariantId);
       }
@@ -1148,8 +1150,7 @@
         console.error('Error:', error);
       }
     })();
-
-})();
+  })();
 </script>
 
 {% schema %}

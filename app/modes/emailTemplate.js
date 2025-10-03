@@ -19,24 +19,7 @@ const emailTemplateSchema = new mongoose.Schema(
       trim: true,
       maxlength: 200,
     },
-    fromEmail: {
-      type: String,
-      required: true,
-      lowercase: true,
-      trim: true,
-      match: [/.+\@.+\..+/, "Please fill a valid email address"],
-    },
-    fromName: {
-      type: String,
-      required: true,
-      trim: true,
-      maxlength: 100,
-    },
-    post: {
-      type: String,
-      default: "default_bert",
-      trim: true,
-    },
+   
 
     headingColor: { type: String, default: "#000000" },
     headingContent: { type: String, required: true, trim: true },
