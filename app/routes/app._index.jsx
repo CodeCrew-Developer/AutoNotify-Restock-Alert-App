@@ -180,7 +180,7 @@ export const loader = async ({ request }) => {
       appUrl,
       session,
       appId,
-      blockType: "restock-alert",
+      blockType: "embed",
       themeNames,
       activeTheme,
       isAppEmbedded,
@@ -193,7 +193,7 @@ export const loader = async ({ request }) => {
       appUrl: process.env.SHOPIFY_APP_URL,
       session: null,
       appId: process.env.SHOPIFY_NOTIFY_ME_ID,
-      blockType: "restock-alert",
+      blockType: "embed",
       themeNames: [],
       activeTheme: null,
       isAppEmbedded: false,
@@ -210,7 +210,6 @@ export default function NotifyDashboard() {
   const [showBanner, setShowBanner] = useState(true);
 
   const { activeTheme, session, appId, blockType, isAppEmbedded } = data;
-  
   const storeDomain = session?.shop?.split(".")[0];
   const themeId = activeTheme?.id?.split("/").pop();
 
@@ -300,7 +299,7 @@ export default function NotifyDashboard() {
                   </InlineStack>
                   <Button
                     variant="secondary"
-                    url={`https://admin.shopify.com/store/${storeDomain}/themes/${themeId}/editor?context=apps&activateAppId=0e839a831948915c25542d1cf0323533/${blockType}`}
+                    url={`https://admin.shopify.com/store/${storeDomain}/themes/${themeId}/editor?context=apps&activateAppId=${appId}/${blockType}`}
                     target="_blank"
                   >
                     Disable
@@ -319,7 +318,7 @@ export default function NotifyDashboard() {
                   </Text>
                   <Button
                     variant="primary"
-                    url={`https://admin.shopify.com/store/${storeDomain}/themes/${themeId}/editor?context=apps&activateAppId=${appId}/${blockType}`}
+                    url={`https://admin.shopify.com/store/${storeDomain}/themes/${themeId}/editor?context=apps&activateAppId=${appId}/${blockType}&autoActivate=true`}
                     target="_blank"
                   >
                     Enable
@@ -389,7 +388,7 @@ export default function NotifyDashboard() {
                     variant="primary"
                     url={
                       themeId && session && appId
-                        ? `https://admin.shopify.com/store/${storeDomain}/themes/${themeId}/editor?template=product&addAppBlockId=${appId}/notify_me&target=mainSection`
+                        ? `https://admin.shopify.com/store/${storeDomain}/themes/${themeId}/editor?template=product&addAppBlockId=${appId}/star_rating&target=mainSection`
                         : "#"
                     }
                     target="_blank"
