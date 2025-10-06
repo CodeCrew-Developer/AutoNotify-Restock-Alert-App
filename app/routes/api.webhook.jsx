@@ -125,7 +125,7 @@ async function sendRestockNotification(restockedVariants, shop, token) {
     
     const usersArray = usersJson.users || [];
     const shopSettings = usersJson.shopSettings || {};
-    // console.log("shopSettings",shopSettings)
+    console.log("shopSettings",shopSettings)
 
     // ✅ CHECK IF AUTO-EMAIL IS ENABLED FOR THIS SHOP
     if (!shopSettings.autoEmailGloballyEnabled) {
