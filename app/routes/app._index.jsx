@@ -299,7 +299,7 @@ export default function NotifyDashboard() {
                   </InlineStack>
                   <Button
                     variant="secondary"
-                    url={`https://admin.shopify.com/store/${storeDomain}/themes/${themeId}/editor?context=apps&appEmbed=${appId}/${blockType}`}
+                    url={`https://admin.shopify.com/store/${storeDomain}/themes/${themeId}/editor?context=apps&activateAppId=${appId}/${blockType}`}
                     target="_blank"
                   >
                     Disable
@@ -318,7 +318,7 @@ export default function NotifyDashboard() {
                   </Text>
                   <Button
                     variant="primary"
-                    url={`https://admin.shopify.com/store/${storeDomain}/themes/${themeId}/editor?context=apps&appEmbed=${appId}/${blockType}`}
+                    url={`https://admin.shopify.com/store/${storeDomain}/themes/${themeId}/editor?context=apps&activateAppId=${appId}/${blockType}`}
                     target="_blank"
                   >
                     Enable
