@@ -203,6 +203,7 @@ export default function EnhancedUsersPage() {
             newWebhookState,
             newWebhookState,
           );
+          console.log("settingsUpdated",settingsUpdated)
 
           if (settingsUpdated) {
             setToastMessage(
