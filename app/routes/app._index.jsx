@@ -180,7 +180,7 @@ export const loader = async ({ request }) => {
       appUrl,
       session,
       appId,
-      blockType: "restock-alert",
+      blockType: "embed",
       themeNames,
       activeTheme,
       isAppEmbedded,
@@ -193,7 +193,7 @@ export const loader = async ({ request }) => {
       appUrl: process.env.SHOPIFY_APP_URL,
       session: null,
       appId: process.env.SHOPIFY_NOTIFY_ME_ID,
-      blockType: "restock-alert",
+      blockType: "embed",
       themeNames: [],
       activeTheme: null,
       isAppEmbedded: false,
@@ -299,7 +299,7 @@ export default function NotifyDashboard() {
                   </InlineStack>
                   <Button
                     variant="secondary"
-                    url={`https://admin.shopify.com/store/${storeDomain}/themes/${themeId}/editor?context=apps&activateAppId=${appId}/${blockType}`}
+                    url={`https://admin.shopify.com/store/${storeDomain}/themes/${themeId}/editor?context=apps&appEmbed=${appId}/${blockType}`}
                     target="_blank"
                   >
                     Disable
@@ -318,7 +318,7 @@ export default function NotifyDashboard() {
                   </Text>
                   <Button
                     variant="primary"
-                    url={`https://admin.shopify.com/store/${storeDomain}/themes/${themeId}/editor?context=apps&activateAppId=${appId}/${blockType}`}
+                    url={`https://admin.shopify.com/store/${storeDomain}/themes/${themeId}/editor?context=apps&appEmbed=${appId}/${blockType}`}
                     target="_blank"
                   >
                     Enable
