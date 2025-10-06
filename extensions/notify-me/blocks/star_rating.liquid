@@ -694,7 +694,8 @@
               id
               title
               inventoryPolicy
-              inventoryItem {                  
+              inventoryItem { 
+              tracked                 
                 id
                 inventoryLevels(first: 10) {
                   edges {
@@ -726,97 +727,100 @@
     let currentProductId = '';
     let lastCheckedVariantId = null;
 
-    async function fetchShopifyInventoryByVariant(variantId) {
-      if (lastCheckedVariantId === variantId && allVariants.length > 0) {
-        updateUIForCurrentVariant(variantId);
-        return;
+  async function fetchShopifyInventoryByVariant(variantId) {
+  if (lastCheckedVariantId === variantId && allVariants.length > 0) {
+    updateUIForCurrentVariant(variantId);
+    return;
+  }
+
+  lastCheckedVariantId = variantId;
+
+  const shopifyUrl = `https://${shopDomain}/admin/api/2024-07/graphql.json`;
+  const headers = {
+    'Content-Type': 'application/json',
+    'X-Shopify-Access-Token': accessToken,
+  };
+
+  try {
+    const response = await fetch(shopifyUrl, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ query: inventoryQuery, variables: { variantId } }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const responseData = await response.json();
+    // console.log('responseData', responseData);
+
+    if (responseData.data?.productVariant?.product?.variants?.edges) {
+      if (responseData.data.productVariant?.product?.id) {
+        currentProductId = responseData.data.productVariant.product.id.split('/').pop();
       }
 
-      lastCheckedVariantId = variantId;
+      allVariants = responseData.data.productVariant.product.variants.edges.map((edge) => {
+        const variant = edge.node;
+        let availableQuantity = 0;
 
-      const shopifyUrl = `https://${shopDomain}/admin/api/2024-07/graphql.json`;
-      const headers = {
-        'Content-Type': 'application/json',
-        'X-Shopify-Access-Token': accessToken,
-      };
-
-      try {
-        const response = await fetch(shopifyUrl, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({ query: inventoryQuery, variables: { variantId } }),
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const responseData = await response.json();
-        // console.log('responseData', responseData);
-
-        if (responseData.data?.productVariant?.product?.variants?.edges) {
-          if (responseData.data.productVariant?.product?.id) {
-            currentProductId = responseData.data.productVariant.product.id.split('/').pop();
-          }
-
-          allVariants = responseData.data.productVariant.product.variants.edges.map((edge) => {
-            const variant = edge.node;
-            let availableQuantity = 0;
-
-            if (variant.inventoryItem?.inventoryLevels?.edges) {
-              variant.inventoryItem.inventoryLevels.edges.forEach((level) => {
-                if (level.node.quantities) {
-                  level.node.quantities.forEach((qty) => {
-                    if (qty.name === 'available') {
-                      availableQuantity += qty.quantity;
-                    }
-                  });
+        if (variant.inventoryItem?.inventoryLevels?.edges) {
+          variant.inventoryItem.inventoryLevels.edges.forEach((level) => {
+            if (level.node.quantities) {
+              level.node.quantities.forEach((qty) => {
+                if (qty.name === 'available') {
+                  availableQuantity += qty.quantity;
                 }
               });
             }
-
-            return {
-              id: variant.id,
-              title: variant.title,
-              available: availableQuantity > 0,
-              quantity: availableQuantity,
-              inventoryPolicy: variant.inventoryPolicy, 
-            };
           });
-
-          hasOutOfStockVariants = allVariants.some((variant) => !variant.available);
-
-          updateUIForCurrentVariant(variantId);
-          populateVariantSelector();
         }
 
-        return responseData;
-      } catch (error) {
-        console.error('Error fetching product data fields:', error.message);
-        hideNotifyButton();
-        return {};
-      }
+        return {
+          id: variant.id,
+          title: variant.title,
+          available: availableQuantity > 0,
+          quantity: availableQuantity,
+          inventoryPolicy: variant.inventoryPolicy,
+          inventoryTracked: variant.inventoryItem?.tracked || false,
+        };
+      });
+
+      hasOutOfStockVariants = allVariants.some((variant) => !variant.available);
+
+      updateUIForCurrentVariant(variantId);
+      populateVariantSelector();
     }
 
-    function updateUIForCurrentVariant(variantId) {
-      const currentVariant = allVariants.find((v) => v.id === variantId);
+    return responseData;
+  } catch (error) {
+    console.error('Error fetching product data fields:', error.message);
+    hideNotifyButton();
+    return {};
+  }
+}
 
-      if (!currentVariant) {
-        console.log('ERROR: Current variant not found in data');
-        hideNotifyButton();
-        return;
-      }
+function updateUIForCurrentVariant(variantId) {
+  const currentVariant = allVariants.find((v) => v.id === variantId);
 
-      
-      const isOutOfStock = currentVariant.quantity === 0 || !currentVariant.available;
-      const isDenyPolicy = currentVariant.inventoryPolicy === 'DENY';
+  if (!currentVariant) {
+    console.log('ERROR: Current variant not found in data');
+    hideNotifyButton();
+    return;
+  }
 
-      if (isOutOfStock && isDenyPolicy) {
-        showNotifyButton();
-      } else {
-        hideNotifyButton();
-      }
-    }
+  const isOutOfStock = currentVariant.quantity === 0 || !currentVariant.available;
+  const isDenyPolicy = currentVariant.inventoryPolicy === 'DENY';
+  const isTracked = currentVariant.inventoryTracked === true;
+  // console.log("isTrackedisTracked",isTracked)
+
+  // Show notify button only if: out of stock AND deny policy AND inventory is tracked
+  if (isOutOfStock && isDenyPolicy && isTracked) {
+    showNotifyButton();
+  } else {
+    hideNotifyButton();
+  }
+}
 
     function showNotifyButton() {
       const btnContainer = document.getElementById('Anra_inventory-info-button');
@@ -841,6 +845,7 @@
 
     function populateVariantSelector() {
   const variantSelector = document.getElementById('Anra_variantSelector');
+  // console.log("variantSelectorvariantSelector",variantSelector)
   
   if (!variantSelector) return;
 
@@ -848,14 +853,16 @@
     variantSelector.remove(1);
   }
 
-  // Only show variants that are out of stock AND have DENY policy
+  
   const outOfStockVariants = allVariants.filter((variant) => {
     const isOutOfStock = variant.quantity === 0 || !variant.available;
     const isDenyPolicy = variant.inventoryPolicy === 'DENY';
+   
     
-    // Only include variants that are out of stock AND have deny policy
+    
     return isOutOfStock && isDenyPolicy;
   });
+
 
   // console.log('Out of stock variants with DENY policy:', outOfStockVariants);
 
@@ -887,6 +894,7 @@
     if (selectedVariant) {
       const isOutOfStock = selectedVariant.quantity === 0 || !selectedVariant.available;
       const isDenyPolicy = selectedVariant.inventoryPolicy === 'DENY';
+      
       
       // console.log('Selected variant:', selectedVariant.title, 'Out of stock:', isOutOfStock, 'Deny policy:', isDenyPolicy);
     }
