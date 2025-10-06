@@ -388,7 +388,7 @@ export default function NotifyDashboard() {
                     variant="primary"
                     url={
                       themeId && session && appId
-                        ? `https://admin.shopify.com/store/${storeDomain}/themes/${themeId}/editor?template=product&addAppBlockId=${appId}/${appHandle}&target=mainSection`
+                        ? `https://admin.shopify.com/store/${storeDomain}/themes/${themeId}/editor?template=product&addAppBlockId=${appId}/notify_me&target=mainSection`
                         : "#"
                     }
                     target="_blank"
