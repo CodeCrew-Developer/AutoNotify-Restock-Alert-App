@@ -91,7 +91,7 @@ async function sendRestockNotification(restockedVariants, shop, token) {
   if (!shop) {
     throw new Error("❌ Shop name is required to fetch template and users");
   }
-  const templateApi = `${process.env.SHOPIFY_APP_URL}/api/email_template?shopDomain=${shop}`;
+  const templateApi = `${process.env.SHOPIFY_APP_URL}/api/email_template?shopName=${encodeURIComponent(shop)}`;
   const usersApi = `${process.env.SHOPIFY_APP_URL}/api/users?shopDomain=${shop}`;
   // console.log("templateApitemplateApi", templateApi);
   // console.log("usersApiusersApi", usersApi);
