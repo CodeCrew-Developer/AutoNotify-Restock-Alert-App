@@ -134,15 +134,15 @@ async function sendRestockNotification(restockedVariants, shop, token) {
     if (!templateData) {
       console.error("❌ No email template found for shop:", shop);
 
-      // const allTemplatesResponse = await fetch(
-      //   `${process.env.SHOPIFY_APP_URL}/api/email_template`,
-      // );
-      // if (allTemplatesResponse.ok) {
-      //   const allTemplates = await allTemplatesResponse.json();
-      //   const availableShops =
-      //     allTemplates.data?.emailTemplates?.map((t) => t.shopDomain) || [];
-      //   // console.log("📋 Available template shops:", availableShops);
-      // }
+      const allTemplatesResponse = await fetch(
+        `${process.env.SHOPIFY_APP_URL}/api/email_template`,
+      );
+      if (allTemplatesResponse.ok) {
+        const allTemplates = await allTemplatesResponse.json();
+        const availableShops =
+          allTemplates.data?.emailTemplates?.map((t) => t.shopDomain) || [];
+        console.log("📋 Available template shops:", availableShops);
+      }
 
       throw new Error("No email template found for this shop");
     }
