@@ -2,8 +2,6 @@ import users from "../modes/users";
 import { ShopSettings } from "../modes/users";
 import { cors } from "remix-utils/cors";
 
-const normalizeShopName = (shop) => shop.toLowerCase().trim();
-
 export async function loader({ request }) {
   if (request.method === "OPTIONS") {
     return new Response(null, {
@@ -17,21 +15,15 @@ export async function loader({ request }) {
   }
 
   let url = new URL(request.url);
-  let shopName = url.searchParams.get("shopName");
+  let shopDomain = url.searchParams.get("shopDomain");
 
   try {
     let data, shopSettings;
 
-    if (shopName) {
-      const normalized = normalizeShopName(shopName);
-
-      data = await users.find({
-        shopName: new RegExp(`^${normalized}$`, "i"),
-      });
-
-      shopSettings = await ShopSettings.findOne({
-        shopName: new RegExp(`^${normalized}$`, "i"),
-      });
+    if (shopDomain) {
+      // 🔹 Match exact shop name (no normalization)
+      data = await users.find({ shopDomain });
+      shopSettings = await ShopSettings.findOne({ shopDomain });
     } else {
       data = await users.find();
       shopSettings = null;
@@ -76,13 +68,13 @@ export async function action({ request }) {
 
     // ✅ Handle PATCH for email flag update
     if (request.method === "PATCH" || data.action === "updateEmailFlag") {
-      const { email, productId, variantId, shopName, emailSent } = data;
+      const { email, productId, variantId, shopDomain, emailSent } = data;
 
       if (
         !email ||
         !productId ||
         !variantId ||
-        !shopName ||
+        !shopDomain ||
         emailSent === undefined
       ) {
         return cors(
@@ -90,7 +82,7 @@ export async function action({ request }) {
           new Response(
             JSON.stringify({
               error:
-                "Email, productId, variantId, shopName, and emailSent are required for flag update",
+                "Email, productId, variantId, shopDomain, and emailSent are required for flag update",
             }),
             {
               status: 400,
@@ -100,18 +92,11 @@ export async function action({ request }) {
         );
       }
 
-      // ✅ Normalize and trim all values for matching
-      const normalizedEmail = email.toLowerCase().trim();
-      const normalizedProductId = productId.toString().trim();
-      const normalizedVariantId = variantId.toString().trim();
-      const normalizedShopName = shopName.toString().trim();
-
-      // ✅ First, find the user to debug
       const existingUser = await users.findOne({
-        email: normalizedEmail,
-        productId: normalizedProductId,
-        variantId: normalizedVariantId,
-        shopName: new RegExp(`^${normalizedShopName}$`, "i"),
+        email: email.toLowerCase().trim(),
+        productId: productId.toString().trim(),
+        variantId: variantId.toString().trim(),
+        shopDomain, // 🔹 exact match
       });
 
       if (existingUser) {
@@ -120,34 +105,31 @@ export async function action({ request }) {
           email: existingUser.email,
           productId: existingUser.productId,
           variantId: existingUser.variantId,
-          shopName: existingUser.shopName,
+          shopDomain: existingUser.shopDomain,
           currentEmailSent: existingUser.emailSent,
         });
       }
 
-      // ✅ Update the user's emailSent flag with case-insensitive shop name
       const updatedUser = await users.findOneAndUpdate(
         {
-          email: normalizedEmail,
-          productId: normalizedProductId,
-          variantId: normalizedVariantId,
-          shopName: new RegExp(`^${normalizedShopName}$`, "i"),
+          email: email.toLowerCase().trim(),
+          productId: productId.toString().trim(),
+          variantId: variantId.toString().trim(),
+          shopDomain, // 🔹 exact match only
         },
         {
           emailSent: emailSent,
           updatedAt: new Date().toISOString(),
         },
-        {
-          new: true,
-        },
+        { new: true },
       );
 
       if (!updatedUser) {
-        console.error("❌ User not found for update. Attempted with:", {
-          email: normalizedEmail,
-          productId: normalizedProductId,
-          variantId: normalizedVariantId,
-          shopName: normalizedShopName,
+        console.error("❌ User not found for update:", {
+          email,
+          productId,
+          variantId,
+          shopDomain,
         });
 
         return cors(
@@ -156,12 +138,6 @@ export async function action({ request }) {
             JSON.stringify({
               error: "User not found",
               message: "No user found with the provided criteria",
-              searchedWith: {
-                email: normalizedEmail,
-                productId: normalizedProductId,
-                variantId: normalizedVariantId,
-                shopName: normalizedShopName,
-              },
             }),
             {
               status: 404,
@@ -194,14 +170,16 @@ export async function action({ request }) {
 
     // ✅ Handle shop settings update
     if (data.action === "updateShopSettings") {
-      const { shopName, autoEmailGloballyEnabled, webhookActive } = data;
+      const { shopDomain, autoEmailGloballyEnabled, webhookActive } = data;
+      console.log("shopDomain",shopDomain)
+      console.log("datadata",data)
 
-      if (!shopName) {
+      if (!shopDomain) {
         return cors(
           request,
           new Response(
             JSON.stringify({
-              error: "Shop name is required for settings update",
+              error: "Shop Domain is required for settings update",
             }),
             {
               status: 400,
@@ -212,10 +190,10 @@ export async function action({ request }) {
       }
 
       const shopSettings = await ShopSettings.findOneAndUpdate(
-        { shopName: shopName },
+        { shopDomain },
         {
-          autoEmailGloballyEnabled: autoEmailGloballyEnabled,
-          webhookActive: webhookActive,
+          autoEmailGloballyEnabled,
+          webhookActive,
         },
         {
           upsert: true,
@@ -229,7 +207,7 @@ export async function action({ request }) {
           JSON.stringify({
             success: true,
             message: "Shop settings updated successfully",
-            shopSettings: shopSettings,
+            shopSettings,
           }),
           {
             status: 200,
@@ -240,8 +218,7 @@ export async function action({ request }) {
     }
 
     // ✅ Handle POST - Create new user
-    // ✅ Handle POST - Create new user
-    const requiredFields = ["email", "productId", "variantId", "shopName"];
+    const requiredFields = ["email", "productId", "variantId", "shopDomain"];
     const missing = requiredFields.filter(
       (f) => !data[f] || data[f].toString().trim() === "",
     );
@@ -266,22 +243,21 @@ export async function action({ request }) {
       email: data.email.toLowerCase().trim(),
       productId: data.productId.toString().trim(),
       variantId: data.variantId.toString().trim(),
-      shopName: normalizeShopName(data.shopName),
+      shopDomain: data.shopDomain, // 🔹 store full name exactly as passed
       emailSent: 0,
       createdAt: data.createdAt || new Date().toISOString(),
     };
 
     console.log("🆕 Creating/Updating user:", userData);
 
-    // ✅ Prevent duplicate error by using upsert
     const newUser = await users.findOneAndUpdate(
       {
         email: userData.email,
         productId: userData.productId,
         variantId: userData.variantId,
-        shopName: userData.shopName,
+        shopDomain: userData.shopDomain, // exact match
       },
-      { $setOnInsert: userData }, // insert only if not exists
+      { $setOnInsert: userData },
       { upsert: true, new: true },
     );
 

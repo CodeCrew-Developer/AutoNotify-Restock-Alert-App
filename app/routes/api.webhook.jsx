@@ -44,11 +44,10 @@ export async function action({ request }) {
     const updates = Array.isArray(data) ? data : [data];
 
     const restockedVariants = [];
-
-    for (const item of updates) {
+for (const item of updates) {
       const key = `${item.inventory_item_id}-${item.location_id}`;
       const now = Date.now();
-      console.log("recentlyNotifiedrecentlyNotified",recentlyNotified)
+      console.log("recentlyNotifiedrecentlyNotified", recentlyNotified);
 
       if (
         !recentlyNotified.has(key) ||
@@ -92,42 +91,26 @@ async function sendRestockNotification(restockedVariants, shop, token) {
   if (!shop) {
     throw new Error("❌ Shop name is required to fetch template and users");
   }
+  const templateApi = `${process.env.SHOPIFY_APP_URL}/api/email_template?shopDomain=${shop}`;
+  const usersApi = `${process.env.SHOPIFY_APP_URL}/api/users?shopDomain=${shop}`;
+  // console.log("templateApitemplateApi", templateApi);
+  // console.log("usersApiusersApi", usersApi);
 
-  function extractShopName(shopDomain) {
-    if (!shopDomain) return shopDomain;
-    
-    let cleanName = shopDomain.replace('.myshopify.com', '');
-    
-    const words = cleanName.split('-');
-    const capitalizedWords = words.map((word, index) => 
-      index === 0 ? word.charAt(0).toUpperCase() + word.slice(1) : word
-    );
-    
-    return capitalizedWords.join(' ');
-  }
-
-  const cleanShopName = extractShopName(shop);
-
-  const templateApi = `${process.env.SHOPIFY_APP_URL}/api/email_template?shopName=${encodeURIComponent(shop)}`;
-  const usersApi = `${process.env.SHOPIFY_APP_URL}/api/users?shopName=${encodeURIComponent(cleanShopName)}`;
-  
   try {
-    // ✅ FETCH USERS AND SHOP SETTINGS
     const usersResponse = await fetch(usersApi);
-    
+
     if (!usersResponse.ok) {
-      console.error("❌ Users fetch failed:", usersResponse.status);
+      console.error(" Users fetch failed:", usersResponse.status);
       throw new Error("Failed to fetch users");
     }
 
     const usersJson = await usersResponse.json();
-    console.log("usersJsonusersJson111usersJson", usersJson.users);
-    
+    // console.log("usersJsonusersJson111usersJson", usersJson.users);
+
     const usersArray = usersJson.users || [];
     const shopSettings = usersJson.shopSettings || {};
-    console.log("shopSettings",shopSettings)
+    // console.log("shopSettings", shopSettings);
 
-    // ✅ CHECK IF AUTO-EMAIL IS ENABLED FOR THIS SHOP
     if (!shopSettings.autoEmailGloballyEnabled) {
       console.log(`⚠️ Auto-email is disabled for shop: ${shop}`);
       console.log("🔍 Shop settings:", shopSettings);
@@ -147,19 +130,20 @@ async function sendRestockNotification(restockedVariants, shop, token) {
     const templateJson = await templateResponse.json();
 
     const templateData = templateJson?.data?.emailTemplates?.[0];
-    
+
     if (!templateData) {
       console.error("❌ No email template found for shop:", shop);
-      
-      const allTemplatesResponse = await fetch(
-        `${process.env.SHOPIFY_APP_URL}/api/email_template`
-      );
-      if (allTemplatesResponse.ok) {
-        const allTemplates = await allTemplatesResponse.json();
-        const availableShops = allTemplates.data?.emailTemplates?.map(t => t.shopName) || [];
-        // console.log("📋 Available template shops:", availableShops);
-      }
-      
+
+      // const allTemplatesResponse = await fetch(
+      //   `${process.env.SHOPIFY_APP_URL}/api/email_template`,
+      // );
+      // if (allTemplatesResponse.ok) {
+      //   const allTemplates = await allTemplatesResponse.json();
+      //   const availableShops =
+      //     allTemplates.data?.emailTemplates?.map((t) => t.shopDomain) || [];
+      //   // console.log("📋 Available template shops:", availableShops);
+      // }
+
       throw new Error("No email template found for this shop");
     }
 
@@ -167,19 +151,25 @@ async function sendRestockNotification(restockedVariants, shop, token) {
       console.error("❌ Template shop mismatch!");
       console.error("   Requested:", shop);
       console.error("   Received:", templateData.shopName);
-      throw new Error(`Template mismatch: got ${templateData.shopName} instead of ${shop}`);
+      throw new Error(
+        `Template mismatch: got ${templateData.shopName} instead of ${shop}`,
+      );
     }
 
     // console.log("✅ Template verified for:", templateData.shopName);
-    
+
     if (usersArray.length === 0) {
       // console.log("🔍 No users found for shop, checking all users...");
       try {
-        const allUsersResponse = await fetch(`${process.env.SHOPIFY_APP_URL}/api/users`);
+        const allUsersResponse = await fetch(
+          `${process.env.SHOPIFY_APP_URL}/api/users`,
+        );
         if (allUsersResponse.ok) {
           const allUsersJson = await allUsersResponse.json();
           const allUsers = allUsersJson.users || [];
-          const distinctShops = [...new Set(allUsers.map(user => user.shopName))];
+          const distinctShops = [
+            ...new Set(allUsers.map((user) => user.shopDomain)),
+          ];
           // console.log("🔍 Distinct shop names in database:", distinctShops);
         }
       } catch (debugError) {
@@ -207,12 +197,16 @@ async function sendRestockNotification(restockedVariants, shop, token) {
 
     const matchingUsers = usersArray.filter((user) => {
       if (user.emailSent === 1) {
-        console.log(`⏸ Skipping user ${user.email} - already notified (emailSent: 1)`);
+        console.log(
+          `⏸ Skipping user ${user.email} - already notified (emailSent: 1)`,
+        );
         return false;
       }
 
       return restockedVariants.some((variant) => {
-        const details = inventoryToVariantDetails.get(variant.inventory_item_id);
+        const details = inventoryToVariantDetails.get(
+          variant.inventory_item_id,
+        );
         const normalizedUserId = normalizeVariantId(user.variantId);
         const normalizedVariantId = normalizeVariantId(details?.id);
         return normalizedUserId === normalizedVariantId;
@@ -235,7 +229,7 @@ async function sendRestockNotification(restockedVariants, shop, token) {
       ) {
         recentlyNotified.set(emailKey, now);
         recipientEmails.push(user.email);
-        usersToUpdate.push(user); 
+        usersToUpdate.push(user);
       } else {
         console.log(
           `⏸ Skipping duplicate email to ${user.email} for variant ${variantId}`,
@@ -249,15 +243,17 @@ async function sendRestockNotification(restockedVariants, shop, token) {
         totalUsersFromAPI: usersArray.length,
         matchingUsers: matchingUsers.length,
         restockedVariants: restockedVariants.length,
-        shopName: shop,
-        autoEmailEnabled: shopSettings.autoEmailGloballyEnabled
+         shopName: shop,
+        autoEmailEnabled: shopSettings.autoEmailGloballyEnabled,
       });
       return [];
     }
 
     const itemsHtml = restockedVariants
       .map((variant) => {
-        const details = inventoryToVariantDetails.get(variant.inventory_item_id);
+        const details = inventoryToVariantDetails.get(
+          variant.inventory_item_id,
+        );
         if (!details) return "";
         return `
       <div class="product-card">
@@ -305,41 +301,41 @@ async function sendRestockNotification(restockedVariants, shop, token) {
 
       try {
         // console.log(`📧 Attempting to send email to: ${email}`);
-        
+
         const response = await fetch(
           process.env.SHOPIFY_APP_URL + "/api/sendMail",
           {
             method: "POST",
-            headers: { 
-              "Content-Type": "application/json"
+            headers: {
+              "Content-Type": "application/json",
             },
             body: JSON.stringify({
               recipientEmail: email,
               subject: templateData.subject,
               html: templateHtml,
             }),
-          }
+          },
         );
 
         const responseData = await response.json().catch(() => null);
-        
+
         if (response.ok) {
           console.log(`✅ Restock notification sent to ${email}`);
           successfullyNotifiedEmails.push(email);
-          await updateUserEmailFlag(user, cleanShopName);
+          await updateUserEmailFlag(user, shop);
         } else {
           console.error(`❌ Failed to send to ${email}:`, {
             status: response.status,
             statusText: response.statusText,
-            data: responseData
+            data: responseData,
           });
         }
       } catch (emailError) {
         console.error(`❌ Exception sending to ${email}:`, emailError.message);
       }
-      
+
       if (i < recipientEmails.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
     }
 
@@ -350,31 +346,36 @@ async function sendRestockNotification(restockedVariants, shop, token) {
   }
 }
 
-async function updateUserEmailFlag(user, shopName) {
+async function updateUserEmailFlag(user, shopDomain) {
   try {
     const updateApi = `${process.env.SHOPIFY_APP_URL}/api/users`;
-    
+
     const response = await fetch(updateApi, {
-      method: "PATCH", 
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        action: 'updateEmailFlag',
+        action: "updateEmailFlag",
         email: user.email,
         productId: user.productId,
         variantId: user.variantId,
-        shopName: shopName,
-        emailSent: 1
+        shopDomain,
+        emailSent: 1,
       }),
     });
-    console.log("flag response",response)
+    console.log("flag response", response);
 
     if (response.ok) {
       console.log(`✅ Updated emailSent flag for user ${user.email}`);
     } else {
-      console.error(`❌ Failed to update emailSent flag for user ${user.email}`);
+      console.error(
+        `❌ Failed to update emailSent flag for user ${user.email}`,
+      );
     }
   } catch (error) {
-    console.error(`❌ Error updating emailSent flag for user ${user.email}:`, error);
+    console.error(
+      `❌ Error updating emailSent flag for user ${user.email}:`,
+      error,
+    );
   }
 }
 

@@ -17,7 +17,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    shopName: {
+    shopDomain: {
       type: String,
       required: true,
     },
@@ -39,8 +39,8 @@ const userSchema = new mongoose.Schema(
   },
 );
 
-// Add compound index for email, productId, variantId, and shopName
-userSchema.index({ email: 1, productId: 1, variantId: 1, shopName: 1 }, { unique: true });
+// Add compound index for email, productId, variantId, and shopDomain
+userSchema.index({ email: 1, productId: 1, variantId: 1, shopDomain: 1 }, { unique: true });
 
 // Clear any existing model to avoid conflicts
 if (mongoose.models.User) {
@@ -50,7 +50,7 @@ if (mongoose.models.User) {
 // New schema for shop-specific settings
 const shopSettingsSchema = new mongoose.Schema(
   {
-    shopName: {
+    shopDomain: {
       type: String,
       required: true,
       unique: true,

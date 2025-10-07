@@ -55,13 +55,14 @@ export const loader = async ({ request }) => {
         shop {
           name
           email
+          myshopifyDomain
         }
       }
     `);
     shopDetail = (await shopGraphql.json()).data.shop;
 
     const usersResponse = await fetch(
-      `${API_ENDPOINT}?shopName=${encodeURIComponent(shopDetail.name)}`,
+      `${API_ENDPOINT}?shopDomain=${shopDetail.myshopifyDomain}`,
     );
     // console.log("usersResponse",usersResponse)
     if (usersResponse.ok) {
@@ -97,7 +98,7 @@ export const loader = async ({ request }) => {
     webhookExists,
     session,
     email: shopDetail.email,
-    shopName: shopDetail.name,
+    shopDomain: shopDetail.myshopifyDomain,
     appUrl,
     shopSettings,
   };
@@ -158,7 +159,7 @@ export default function EnhancedUsersPage() {
         },
         body: JSON.stringify({
           action: "updateShopSettings",
-          shopName: data.shopName,
+          shopDomain: data.shopDomain,
           autoEmailGloballyEnabled: autoEmailEnabled,
           webhookActive: webhookActive,
         }),
@@ -1007,6 +1008,7 @@ export default function EnhancedUsersPage() {
           session={session}
           setShowTemplateEditor={setShowTemplateEditor}
           appUrl={appUrl}
+          
         />
 
         {toastMarkup}
