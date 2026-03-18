@@ -725,6 +725,7 @@
     let currentAnimation = 'from-center';
     let hasOutOfStockVariants = false;
     let currentProductId = '';
+    let currentProductTitle = '';
     let lastCheckedVariantId = null;
 
   async function fetchShopifyInventoryByVariant(variantId) {
@@ -753,11 +754,12 @@
     }
 
     const responseData = await response.json();
-    // console.log('responseData', responseData);
+    console.log('responseData>>>', responseData);
 
     if (responseData.data?.productVariant?.product?.variants?.edges) {
       if (responseData.data.productVariant?.product?.id) {
         currentProductId = responseData.data.productVariant.product.id.split('/').pop();
+        currentProductTitle = responseData.data.productVariant.product.title;
       }
 
       allVariants = responseData.data.productVariant.product.variants.edges.map((edge) => {
@@ -992,11 +994,13 @@ function updateUIForCurrentVariant(variantId) {
       // console.log('variantId', variantId);
 
       const productId = currentProductId;
-      // console.log('productId', productId);
+      const productTitle = currentProductTitle;
+      console.log('productTitle>>>', productTitle);
 
       const userData = {
         email: email.toLowerCase().trim(),
         productId: productId,
+        productTitle: productTitle,
         variantId: variantId,
         // shopName: shopName,
         shopDomain,

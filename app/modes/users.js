@@ -13,6 +13,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    productTitle: {
+      type: String,
+      required: false,
+    },
     variantId: {
       type: String,
       required: true,
@@ -23,11 +27,11 @@ const userSchema = new mongoose.Schema(
     },
     autoEmailEnabled: {
       type: Boolean,
-      default: false, 
+      default: false,
     },
     emailSent: {
       type: Number,
-      default: 0, 
+      default: 0,
     },
     createdAt: {
       type: Date,
@@ -39,8 +43,11 @@ const userSchema = new mongoose.Schema(
   },
 );
 
-// Add compound index for email, productId, variantId, and shopDomain
-userSchema.index({ email: 1, productId: 1, variantId: 1, shopDomain: 1 }, { unique: true });
+// Add compound index for email, productId, productTitle, variantId, and shopDomain
+userSchema.index(
+  { email: 1, productId: 1, productTitle: 1, variantId: 1, shopDomain: 1 },
+  { unique: true },
+);
 
 // Clear any existing model to avoid conflicts
 if (mongoose.models.User) {

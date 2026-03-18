@@ -64,7 +64,6 @@ export const loader = async ({ request }) => {
     const usersResponse = await fetch(
       `${API_ENDPOINT}?shopDomain=${shopDetail.myshopifyDomain}`,
     );
-    // console.log("usersResponse",usersResponse)
     if (usersResponse.ok) {
       const usersData = await usersResponse.json();
 
@@ -204,7 +203,6 @@ export default function EnhancedUsersPage() {
             newWebhookState,
             newWebhookState,
           );
-          console.log("settingsUpdated",settingsUpdated)
 
           if (settingsUpdated) {
             setToastMessage(
@@ -349,62 +347,28 @@ export default function EnhancedUsersPage() {
     const emailSentCount = user.emailSent || 0;
 
     return [
-      <InlineStack gap="300" blockAlign="center" key={`user-${index}`}>
-        <div
-          style={{
-            width: "40px",
-            height: "40px",
-            borderRadius: "50%",
-            backgroundColor: emailSentCount > 0 ? "#E3F2FD" : "#F5F5F5",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Icon
-            source={PersonSegmentIcon}
-            tone={emailSentCount > 0 ? "info" : "subdued"}
-          />
-        </div>
-        <BlockStack gap="100">
-          <Text as="p" variant="bodyMd" fontWeight="medium">
-            {user.email || "No email"}
-          </Text>
-        </BlockStack>
-      </InlineStack>,
-      <BlockStack gap="100" key={`product-${index}`}>
+      <BlockStack gap="100">
         <Text as="p" variant="bodyMd" fontWeight="medium">
-          Varinat ID:{user.variantId || "No variant ID"}
+          {user.email || "No email"}
         </Text>
       </BlockStack>,
-      <InlineStack gap="300" blockAlign="center" key={`emails-${index}`}>
-        <div
-          style={{
-            width: "32px",
-            height: "32px",
-            borderRadius: "50%",
-            backgroundColor: emailSentCount > 0 ? "#E8F5E8" : "#FFF3E0",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Icon
-            source={emailSentCount > 0 ? CheckCircleIcon : StatusActiveIcon}
-            tone={emailSentCount > 0 ? "success" : "warning"}
-          />
-        </div>
-        <BlockStack gap="100">
+      <BlockStack gap="100" key={`product-${index}`}>
+        {user.productTitle && (
           <Text as="p" variant="bodyMd" fontWeight="medium">
-            {emailSentCount} email{emailSentCount !== 1 ? "s" : ""}
+            Product: {user.productTitle || "null"}
           </Text>
-          <Badge
-            tone={emailSentCount > 0 ? "success" : "attention"}
-            size="small"
-          >
-            {emailSentCount > 0 ? "Notified" : "Pending"}
-          </Badge>
-        </BlockStack>
+        )}
+        <Text as="p" variant="bodySm" fontWeight="medium">
+          Variant ID: {user.variantId || "No variant ID"}
+        </Text>
+      </BlockStack>,
+      <InlineStack gap="100">
+        {/* <Text as="p" variant="bodyMd" fontWeight="medium">
+          {emailSentCount} email{emailSentCount > 1 ? "s" : ""}
+          </Text> */}
+        <Badge tone={emailSentCount > 0 ? "success" : "attention"} size="small">
+          {emailSentCount > 0 ? "Sent" : "Not sent"}
+        </Badge>
       </InlineStack>,
       <BlockStack gap="100" key={`dates-${index}`}>
         <Text as="p" variant="bodyMd" fontWeight="medium">
@@ -422,11 +386,11 @@ export default function EnhancedUsersPage() {
           })}
         </Text>
       </BlockStack>,
-      <InlineStack gap="200" blockAlign="center" key={`status-${index}`}>
-        <Badge tone={webhookExists ? "success" : "critical"} size="small">
-          {webhookExists ? "Auto-Email On" : "Auto-Email Off"}
-        </Badge>
-      </InlineStack>,
+      // <InlineStack gap="200" blockAlign="center" key={`status-${index}`}>
+      //   <Badge tone={webhookExists ? "success" : "critical"} size="small">
+      //     {webhookExists ? "Auto-Email On" : "Auto-Email Off"}
+      //   </Badge>
+      // </InlineStack>,
     ];
   });
 
@@ -745,7 +709,7 @@ export default function EnhancedUsersPage() {
               </>
             ) : (
               <>
-                <Box paddingBlockEnd="600">
+                <Box paddingBlockEnd="400">
                   <Grid columns={3} gap="400">
                     {statsCards.map((stat, index) => (
                       <Grid.Cell
@@ -791,212 +755,221 @@ export default function EnhancedUsersPage() {
                   </Grid>
                 </Box>
 
-                <Card padding="500">
-                  <BlockStack gap="400">
-                    <InlineStack align="space-between" gap="400">
-                      <BlockStack gap="200">
-                        <Text as="h1" variant="headingXl" fontWeight="bold">
-                          Subscriber Dashboard
-                        </Text>
-                        <Text as="p" tone="subdued" variant="bodyLg">
-                          Monitor your subscribers, email notifications, and
-                          system status
-                        </Text>
-                      </BlockStack>
-                      <ButtonGroup>
-                        <Button
-                          variant="primary"
-                          icon={EmailIcon}
-                          tone={webhookExists ? "success" : "critical"}
-                          loading={loading}
-                          onClick={handleToggleWebhooks}
-                          size="large"
-                        >
-                          {webhookExists
-                            ? "Disable Auto-Emails"
-                            : "Enable Auto-Emails"}
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          icon={PlusIcon}
-                          onClick={() => setShowTemplateEditor(true)}
-                          size="large"
-                        >
-                          Customize Template
-                        </Button>
-                      </ButtonGroup>
-                    </InlineStack>
-
-                    <Divider />
-
-                    <Banner
-                      title={`Auto-email system is ${webhookExists ? "active" : "inactive"}`}
-                      tone={webhookExists ? "success" : "warning"}
-                    >
-                      <BlockStack gap="200">
-                        <Text as="p" variant="bodyMd">
-                          {webhookExists
-                            ? `System is running smoothly. ${totalEmailsSent} total emails have been sent to ${usersWithEmailsSent} subscribers.`
-                            : "Enable the auto-email system to start sending notifications when products are back in stock."}
-                        </Text>
-                        {!webhookExists && (
-                          <Text as="p" variant="bodySm" tone="subdued">
-                            Click "Enable Auto-Emails" above to activate the
-                            notification system.
+                <BlockStack gap="400">
+                  <Card padding="500">
+                    <BlockStack gap="400">
+                      <InlineStack align="space-between" gap="400">
+                        <BlockStack gap="200">
+                          <Text as="h1" variant="headingXl" fontWeight="bold">
+                            Subscriber Dashboard
                           </Text>
-                        )}
-                      </BlockStack>
-                    </Banner>
-
-                    <InlineStack gap="400" align="space-between" wrap={false}>
-                      <div style={{ minWidth: "350px", flexGrow: 1 }}>
-                        <TextField
-                          placeholder="Search by email, product ID, or variant ID..."
-                          value={searchValue}
-                          onChange={handleSearchChange}
-                          prefix={<Icon source={SearchIcon} />}
-                          clearButton
-                          onClearButtonClick={() => handleSearchChange("")}
-                        />
-                      </div>
-                      <InlineStack gap="300">
-                        <Badge tone="info" size="medium">
-                          {tabFilteredUsers.length} subscribers
-                        </Badge>
-                        <Badge tone="success" size="medium">
-                          {totalEmailsSent} emails sent
-                        </Badge>
-                        <Badge tone="attention" size="medium">
-                          {pendingUsers} pending
-                        </Badge>
-                      </InlineStack>
-                    </InlineStack>
-                  </BlockStack>
-                </Card>
-
-                <Card padding="0">
-                  <BlockStack gap="0">
-                    <div style={{ padding: "24px 24px 0 24px" }}>
-                      <InlineStack align="space-between" blockAlign="center">
-                        <BlockStack gap="100">
-                          <Text as="h2" variant="headingLg" fontWeight="medium">
-                            Subscriber Management
-                          </Text>
-                          <Text as="p" variant="bodySm" tone="subdued">
-                            Monitor email notification history and user
-                            engagement
+                          <Text as="p" tone="subdued" variant="bodyLg">
+                            Monitor your subscribers, email notifications, and
+                            system status
                           </Text>
                         </BlockStack>
-                        <Text as="p" variant="bodySm" tone="subdued">
-                          Page {currentPage} of {totalPages} • Showing{" "}
-                          {currentUsers.length} of {tabFilteredUsers.length}{" "}
-                          subscribers
-                        </Text>
+                        <ButtonGroup>
+                          <Button
+                            variant="primary"
+                            icon={EmailIcon}
+                            tone={webhookExists ? "success" : "critical"}
+                            loading={loading}
+                            onClick={handleToggleWebhooks}
+                            size="large"
+                          >
+                            {webhookExists
+                              ? "Disable Auto-Emails"
+                              : "Enable Auto-Emails"}
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            icon={PlusIcon}
+                            onClick={() => setShowTemplateEditor(true)}
+                            size="large"
+                          >
+                            Customize Template
+                          </Button>
+                        </ButtonGroup>
                       </InlineStack>
-                    </div>
 
-                    <div style={{ padding: "0 10px" }}>
-                      <Tabs
-                        tabs={tabs}
-                        selected={selectedTab}
-                        onSelect={handleTabChange}
-                      />
-                    </div>
+                      <Divider />
 
-                    <div style={{ padding: "0 24px 24px 24px" }}>
-                      {tabFilteredUsers.length > 0 ? (
-                        <BlockStack gap="400">
-                          <DataTable
-                            columnContentTypes={[
-                              "text",
-                              "text",
-                              "text",
-                              "text",
-                              "text",
-                            ]}
-                            headings={[
-                              "Subscriber Details",
-                              "Product Information",
-                              "Email Status",
-                              "Timeline",
-                              "System Status",
-                            ]}
-                            rows={userRows}
-                            sortable={[true, true, true, true, false]}
-                            defaultSortDirection={sortDirection}
-                            initialSortColumnIndex={sortColumn}
-                            onSort={handleSort}
-                            increasedTableDensity={false}
-                            verticalAlign="middle"
-                            hoverable
-                          />
-
-                          {totalPages > 1 && (
-                            <Box paddingBlockStart="400">
-                              <InlineStack align="center">
-                                <Pagination
-                                  hasPrevious={currentPage > 1}
-                                  onPrevious={() =>
-                                    setCurrentPage(currentPage - 1)
-                                  }
-                                  hasNext={currentPage < totalPages}
-                                  onNext={() => setCurrentPage(currentPage + 1)}
-                                  label={`Page ${currentPage} of ${totalPages}`}
-                                />
-                              </InlineStack>
-                              <Box paddingBlockStart="200">
-                                <InlineStack align="center">
-                                  <Text as="p" variant="bodySm" tone="subdued">
-                                    Showing{" "}
-                                    {(currentPage - 1) * itemsPerPage + 1} -{" "}
-                                    {Math.min(
-                                      currentPage * itemsPerPage,
-                                      tabFilteredUsers.length,
-                                    )}{" "}
-                                    of {tabFilteredUsers.length} subscribers
-                                  </Text>
-                                </InlineStack>
-                              </Box>
-                            </Box>
+                      <Banner
+                        title={`Auto-email system is ${webhookExists ? "active" : "inactive"}`}
+                        tone={webhookExists ? "success" : "warning"}
+                      >
+                        <BlockStack gap="200">
+                          <Text as="p" variant="bodyMd">
+                            {webhookExists
+                              ? `System is running smoothly. ${totalEmailsSent} total emails have been sent to ${usersWithEmailsSent} subscribers.`
+                              : "Enable the auto-email system to start sending notifications when products are back in stock."}
+                          </Text>
+                          {!webhookExists && (
+                            <Text as="p" variant="bodySm" tone="subdued">
+                              Click "Enable Auto-Emails" above to activate the
+                              notification system.
+                            </Text>
                           )}
                         </BlockStack>
-                      ) : (
-                        <Box paddingBlock="800">
-                          <EmptyState
-                            heading={
-                              selectedTab === 1
-                                ? "No notified subscribers"
-                                : selectedTab === 2
-                                  ? "No pending subscribers"
-                                  : searchValue
-                                    ? "No subscribers found"
-                                    : "No subscribers yet"
-                            }
-                            image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
-                            action={{
-                              content: "Customize Email Template",
-                              onAction: () => setShowTemplateEditor(true),
-                            }}
-                            secondaryAction={{
-                              content: "Learn more",
-                              url: "https://help.shopify.com",
-                            }}
-                          >
-                            <Text as="p" variant="bodyMd">
-                              {selectedTab === 1
-                                ? "No subscribers have been notified yet. Enable auto-emails to start sending notifications."
-                                : selectedTab === 2
-                                  ? "All subscribers have been notified! Great job managing your inventory."
-                                  : searchValue
-                                    ? "No subscribers match your search criteria. Try adjusting your search terms."
-                                    : "No users have subscribed to out-of-stock notifications yet. Share your product pages to start collecting subscribers."}
+                      </Banner>
+
+                      <InlineStack gap="400" align="space-between" wrap={false}>
+                        <div style={{ minWidth: "350px", flexGrow: 1 }}>
+                          <TextField
+                            placeholder="Search by email, product ID, or variant ID..."
+                            value={searchValue}
+                            onChange={handleSearchChange}
+                            prefix={<Icon source={SearchIcon} />}
+                            clearButton
+                            onClearButtonClick={() => handleSearchChange("")}
+                          />
+                        </div>
+                        <InlineStack gap="300">
+                          <Badge tone="info" size="medium">
+                            {tabFilteredUsers.length} subscribers
+                          </Badge>
+                          <Badge tone="success" size="medium">
+                            {totalEmailsSent} emails sent
+                          </Badge>
+                          <Badge tone="attention" size="medium">
+                            {pendingUsers} pending
+                          </Badge>
+                        </InlineStack>
+                      </InlineStack>
+                    </BlockStack>
+                  </Card>
+
+                  <Card padding="0">
+                    <BlockStack gap="0">
+                      <div style={{ padding: "24px 24px 0 24px" }}>
+                        <InlineStack align="space-between" blockAlign="center">
+                          <BlockStack gap="100">
+                            <Text
+                              as="h2"
+                              variant="headingLg"
+                              fontWeight="medium"
+                            >
+                              Subscriber Management
                             </Text>
-                          </EmptyState>
-                        </Box>
-                      )}
-                    </div>
-                  </BlockStack>
-                </Card>
+                            <Text as="p" variant="bodySm" tone="subdued">
+                              Monitor email notification history and user
+                              engagement
+                            </Text>
+                          </BlockStack>
+                          <Text as="p" variant="bodySm" tone="subdued">
+                            Page {currentPage} of {totalPages} • Showing{" "}
+                            {currentUsers.length} of {tabFilteredUsers.length}{" "}
+                            subscribers
+                          </Text>
+                        </InlineStack>
+                      </div>
+
+                      <div style={{ padding: "0 10px" }}>
+                        <Tabs
+                          tabs={tabs}
+                          selected={selectedTab}
+                          onSelect={handleTabChange}
+                        />
+                      </div>
+
+                      <div style={{ padding: "0 24px 24px 24px" }}>
+                        {tabFilteredUsers.length > 0 ? (
+                          <BlockStack gap="400">
+                            <DataTable
+                              columnContentTypes={[
+                                "text",
+                                "text",
+                                "text",
+                                "text",
+                                "text",
+                              ]}
+                              headings={[
+                                "Subscriber Emails",
+                                "Product Information",
+                                "Email Status",
+                                "Timeline",
+                                // "System Status",
+                              ]}
+                              rows={userRows}
+                              sortable={[true, true, true, true, false]}
+                              defaultSortDirection={sortDirection}
+                              initialSortColumnIndex={sortColumn}
+                              onSort={handleSort}
+                              increasedTableDensity={false}
+                              verticalAlign="middle"
+                              hoverable
+                              truncate
+                            />
+
+                            {totalPages > 1 && (
+                              <Box paddingBlockStart="400">
+                                <InlineStack align="center">
+                                  <Pagination
+                                    hasPrevious={currentPage > 1}
+                                    onPrevious={() =>
+                                      setCurrentPage(currentPage - 1)
+                                    }
+                                    hasNext={currentPage < totalPages}
+                                    onNext={() =>
+                                      setCurrentPage(currentPage + 1)
+                                    }
+                                    label={`Page ${currentPage} of ${totalPages}`}
+                                  />
+                                </InlineStack>
+                                <Box paddingBlockStart="200">
+                                  <InlineStack align="center">
+                                    <Text
+                                      as="p"
+                                      variant="bodySm"
+                                      tone="subdued"
+                                    >
+                                      Showing{" "}
+                                      {(currentPage - 1) * itemsPerPage + 1} -{" "}
+                                      {Math.min(
+                                        currentPage * itemsPerPage,
+                                        tabFilteredUsers.length,
+                                      )}{" "}
+                                      of {tabFilteredUsers.length} subscribers
+                                    </Text>
+                                  </InlineStack>
+                                </Box>
+                              </Box>
+                            )}
+                          </BlockStack>
+                        ) : (
+                          <Box paddingBlock="800">
+                            <EmptyState
+                              heading={
+                                selectedTab === 1
+                                  ? "No notified subscribers"
+                                  : selectedTab === 2
+                                    ? "No pending subscribers"
+                                    : searchValue
+                                      ? "No subscribers found"
+                                      : "No subscribers yet"
+                              }
+                              image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
+                              action={{
+                                content: "Customize Email Template",
+                                onAction: () => setShowTemplateEditor(true),
+                              }}
+                            >
+                              <Text as="p" variant="bodyMd">
+                                {selectedTab === 1
+                                  ? "No subscribers have been notified yet. Enable auto-emails to start sending notifications."
+                                  : selectedTab === 2
+                                    ? "All subscribers have been notified! Great job managing your inventory."
+                                    : searchValue
+                                      ? "No subscribers match your search criteria. Try adjusting your search terms."
+                                      : "No users have subscribed to out-of-stock notifications yet. Share your product pages to start collecting subscribers."}
+                              </Text>
+                            </EmptyState>
+                          </Box>
+                        )}
+                      </div>
+                    </BlockStack>
+                  </Card>
+                </BlockStack>
               </>
             )}
           </Layout.Section>
@@ -1008,7 +981,6 @@ export default function EnhancedUsersPage() {
           session={session}
           setShowTemplateEditor={setShowTemplateEditor}
           appUrl={appUrl}
-          
         />
 
         {toastMarkup}

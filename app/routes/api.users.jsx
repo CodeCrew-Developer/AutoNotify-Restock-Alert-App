@@ -95,6 +95,7 @@ export async function action({ request }) {
       const existingUser = await users.findOne({
         email: email.toLowerCase().trim(),
         productId: productId.toString().trim(),
+        productTitle: productTitle.toString().trim(),
         variantId: variantId.toString().trim(),
         shopDomain, // 🔹 exact match
       });
@@ -104,6 +105,7 @@ export async function action({ request }) {
           _id: existingUser._id,
           email: existingUser.email,
           productId: existingUser.productId,
+          productTitle: existingUser.productTitle,
           variantId: existingUser.variantId,
           shopDomain: existingUser.shopDomain,
           currentEmailSent: existingUser.emailSent,
@@ -171,8 +173,6 @@ export async function action({ request }) {
     // ✅ Handle shop settings update
     if (data.action === "updateShopSettings") {
       const { shopDomain, autoEmailGloballyEnabled, webhookActive } = data;
-      console.log("shopDomain",shopDomain)
-      console.log("datadata",data)
 
       if (!shopDomain) {
         return cors(
@@ -242,6 +242,7 @@ export async function action({ request }) {
     const userData = {
       email: data.email.toLowerCase().trim(),
       productId: data.productId.toString().trim(),
+      productTitle: data.productTitle.toString().trim(),
       variantId: data.variantId.toString().trim(),
       shopDomain: data.shopDomain, // 🔹 store full name exactly as passed
       emailSent: 0,
