@@ -872,7 +872,7 @@ const CreateTemplateModal = ({
             </Layout.Section>
           </Layout>
 
-          {toast && <Toast content={toast} onDismiss={() => setToast("")} />}
+          {toast && <Toast content={toast} duration={3000} onDismiss={() => setToast("")} />}
 
           <Divider />
 

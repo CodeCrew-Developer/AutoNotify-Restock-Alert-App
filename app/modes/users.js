@@ -29,6 +29,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    emailSent: {
+      type: Number,
+      default: 0,
+    },
     emailStatus: {
       type: String,
       enum: ["pending", "sent", "failed"],

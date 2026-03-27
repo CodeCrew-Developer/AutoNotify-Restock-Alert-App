@@ -1,11 +1,20 @@
 import { json } from "@remix-run/node";
-import prisma from "../db.server";
 import { authenticate } from "../shopify.server";
-import { sendRestockNotification } from "../utils/notification";
+import prisma from "../db.server";
+import { sendRestockNotification, manualSendProgress } from "../utils/notification";
 
-export const loader = async () => {
-  return json({ message: "Inventory webhook endpoint" });
-};
+export async function loader({ request }) {
+  const url = new URL(request.url);
+  const action = url.searchParams.get("action");
+  const shop = url.searchParams.get("shopDomain") || url.searchParams.get("shop");
+
+  if (action === "progress" && shop) {
+    const progress = manualSendProgress.get(shop) || { total: 0, current: 0, status: "idle" };
+    return json(progress);
+  }
+
+  return json({ message: "Webhook endpoint ready" });
+}
 
 export async function action({ request }) {
   try {
@@ -67,15 +76,15 @@ export async function action({ request }) {
         return json({ success: true, message: "None of the requested products are currently in stock." });
       }
 
-      const resultObj = await sendRestockNotification(inStockVariants, manualShop, session.accessToken, { isManual: true });
+      // Fire and forget the notification process in the background
+      sendRestockNotification(inStockVariants, manualShop, session.accessToken, { isManual: true })
+        .then(result => console.log("Background manual send complete:", result))
+        .catch(err => console.error("Background manual send error:", err));
       
       return json({ 
-        success: resultObj.sentCount > 0, 
-        message: resultObj.sentCount > 0 
-          ? `Manual send complete. ${resultObj.sentCount} emails sent.`
-          : (resultObj.error || "Server error. No emails were sent."),
-        error: resultObj.error,
-        sentCount: resultObj.sentCount
+        success: true, 
+        message: "Notification process started in the background. It may take a few minutes to complete.",
+        sentCount: 0 
       });
     }
 

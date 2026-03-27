@@ -23,6 +23,7 @@ import {
   SkeletonBodyText,
   SkeletonDisplayText,
   SkeletonThumbnail,
+  ProgressBar,
   Tabs,
   Text,
   TextField,
@@ -130,6 +131,10 @@ export default function EnhancedUsersPage() {
   const [itemsPerPage] = React.useState(10);
   const [sortColumn, setSortColumn] = React.useState(3);
   const [sortDirection, setSortDirection] = React.useState("descending");
+  const [isProcessing, setIsProcessing] = React.useState(false);
+  const [progressCurrent, setProgressCurrent] = React.useState(0);
+  const [progressTotal, setProgressTotal] = React.useState(0);
+  const [isPolling, setIsPolling] = React.useState(false);
 
   React.useEffect(() => {
     const timer = setTimeout(() => {
@@ -137,6 +142,38 @@ export default function EnhancedUsersPage() {
     }, 1000);
     return () => clearTimeout(timer);
   }, []);
+
+  React.useEffect(() => {
+    let interval;
+    if (isPolling) {
+      interval = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/webhook?action=progress&shopDomain=${session.shop}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.status === "processing") {
+              setIsProcessing(true);
+              setProgressCurrent(data.current);
+              setProgressTotal(data.total);
+            } else if (data.status === "completed") {
+              setIsProcessing(false);
+              setIsPolling(false);
+              setProgressCurrent(0);
+              setProgressTotal(0);
+              refreshData(false); // Final refresh
+            } else {
+              setIsPolling(false);
+              setIsProcessing(false);
+            }
+          }
+        } catch (err) {
+          console.error("Polling error:", err);
+          setIsPolling(false);
+        }
+      }, 2000);
+    }
+    return () => clearInterval(interval);
+  }, [isPolling, session.shop]);
 
   React.useEffect(() => {
     setFilteredUsers(users);
@@ -524,6 +561,7 @@ export default function EnhancedUsersPage() {
     <Toast
       content={toastMessage}
       error={toastError}
+      duration={3000}
       onDismiss={() => {
         setToastActive(false);
         setToastError(false);
@@ -834,6 +872,7 @@ export default function EnhancedUsersPage() {
         if (result.success) {
           setToastMessage(result.message || "Manual emails sent successfully");
           setToastError(false);
+          setIsPolling(true); // Start polling for progress
           refreshData(false); // Refresh user list to see updated status
         } else {
           setToastMessage(result.message || "Failed to send manual emails");
@@ -1063,6 +1102,22 @@ export default function EnhancedUsersPage() {
                             onSelect={handleTabChange}
                           />
                         </div>
+
+                        {isProcessing && progressTotal > 0 && (
+                          <Box paddingBlock="200" paddingInline="600">
+                            <Box paddingBlockEnd="200">
+                              <Divider />
+                            </Box>
+                            <BlockStack gap="300">
+                              <InlineStack align="space-between">
+                                <Text variant="bodyMd" fontWeight="bold">Status: In Progress...</Text>
+                                <Text variant="bodyMd" monochrome>{progressCurrent} of {progressTotal} Completed</Text>
+                              </InlineStack>
+                              <ProgressBar progress={(progressCurrent / progressTotal) * 100} size="small" tone="primary" />
+                              <Divider />
+                            </BlockStack>
+                          </Box>
+                        )}
 
                         <div style={{ padding: "0 24px 24px 24px" }}>
                           {tabFilteredUsers.length > 0 ? (

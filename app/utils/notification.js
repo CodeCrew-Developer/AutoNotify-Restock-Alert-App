@@ -2,6 +2,8 @@
 const recentlyNotified = new Map();
 const NOTIFY_COOLDOWN_MS = 5 * 60 * 1000;
 
+export const manualSendProgress = new Map(); // shopDomain -> { total, current, status }
+
 export async function sendRestockNotification(restockedVariants, shop, token, options = {}) {
   const { isManual = false } = options;
   if (!shop) {
@@ -48,17 +50,17 @@ export async function sendRestockNotification(restockedVariants, shop, token, op
       throw new Error(`Template mismatch: got ${templateData.shopName} instead of ${shop}`);
     }
 
+    const variantDetailsPromises = restockedVariants.map((variant) =>
+      fetchVariantDetailsFromInventoryId(variant.inventory_item_id, shop, token)
+    );
+    const variantDetailsResults = await Promise.all(variantDetailsPromises);
+
     const inventoryToVariantDetails = new Map();
-    for (const variant of restockedVariants) {
-      const details = await fetchVariantDetailsFromInventoryId(
-        variant.inventory_item_id,
-        shop,
-        token,
-      );
+    variantDetailsResults.forEach((details, idx) => {
       if (details) {
-        inventoryToVariantDetails.set(variant.inventory_item_id, details);
+        inventoryToVariantDetails.set(restockedVariants[idx].inventory_item_id, details);
       }
-    }
+    });
 
     function normalizeVariantId(id) {
       if (!id) return null;
@@ -89,24 +91,37 @@ export async function sendRestockNotification(restockedVariants, shop, token, op
       const variantId = normalizeVariantId(user.variantId);
       const emailKey = `${variantId}-${user.email}`;
 
+      if (isManual) {
+        // Always push for manual sending
+        recipientEmails.push(user.email);
+        usersToUpdate.push(user);
+        continue;
+      }
+
+      const lastNotified = recentlyNotified.get(emailKey);
       if (
-        !recentlyNotified.has(emailKey) ||
-        now - recentlyNotified.get(emailKey) > NOTIFY_COOLDOWN_MS
+        !lastNotified ||
+        now - lastNotified > NOTIFY_COOLDOWN_MS
       ) {
         recentlyNotified.set(emailKey, now);
         recipientEmails.push(user.email);
         usersToUpdate.push(user);
       } else {
-        recentlyNotified.set(emailKey, now);
-        recipientEmails.push(user.email);
-        usersToUpdate.push(user);
-        console.log(`⏸ Skipping duplicate email to ${user.email} for variant ${variantId}`);
+        console.log(`⏸ Cooldown: Skipping email to ${user.email} (last sent ${Math.round((now - lastNotified) / 1000)}s ago)`);
       }
     }
 
     if (recipientEmails.length === 0) {
       console.log("⚠️ No new recipients after cooldown filtering");
-      return [];
+      if (isManual) {
+        manualSendProgress.set(shop, { total: 0, current: 0, status: "completed" });
+        setTimeout(() => manualSendProgress.delete(shop), 30000);
+      }
+      return { sentCount: 0, error: null };
+    }
+
+    if (isManual) {
+      manualSendProgress.set(shop, { total: recipientEmails.length, current: 0, status: "processing" });
     }
 
     const itemsHtml = restockedVariants
@@ -198,8 +213,26 @@ export async function sendRestockNotification(restockedVariants, shop, token, op
         });
       }
 
+      if (isManual) {
+        const prog = manualSendProgress.get(shop);
+        if (prog) {
+          manualSendProgress.set(shop, { ...prog, current: i + 1 });
+        }
+      }
+
+      // 500ms delay between every single email. This ensures the SMTP server 
+      // doesn't see multiple logins at the same time and blocks the account.
       if (i < recipientEmails.length - 1) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+    }
+
+    if (isManual) {
+      const prog = manualSendProgress.get(shop);
+      if (prog) {
+        manualSendProgress.set(shop, { ...prog, status: "completed" });
+        // Clear progress after 1 minute to keep memory clean
+        setTimeout(() => manualSendProgress.delete(shop), 60000);
       }
     }
 
