@@ -21,12 +21,38 @@ import auto_NotifyLogo from "../uploads/Auto_notify_logo.png";
 
 export const loader = async ({ request }) => {
   const appUrl = process.env.SHOPIFY_APP_URL;
+  // console.log("App URL from env:", appUrl);
   const { admin, session } = await authenticate.admin(request);
-  
+  console.log("Authenticated admin:", !!admin);
+  console.log("Session details:", {
+    shop: session?.shop,
+    userId: session?.userId,
+    expires: session?.expires,
+  });
+
+
+
   try {
     const { shop, accessToken } = session;
+    console.log("Shop domain:", shop);
+    console.log("Access token:", accessToken);
     const appId = process.env.SHOPIFY_NOTIFY_ME_ID;
-    // console.log("appIdappIdappId",appId)
+    console.log("appIdappIdappId", appId)
+
+    // Call email template API to ensure default template is created
+    try {
+      const templateApiUrl = `${appUrl}/api/email_template?shopName=${encodeURIComponent(shop)}`;
+      await fetch(templateApiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      console.log(`✅ Default template ensured for shop: ${shop}`);
+    } catch (templateError) {
+      console.error('Error ensuring default template:', templateError);
+      // Continue with loader even if template creation fails
+    }
 
     // Get shop details
     const responseOfShop = await fetch(
@@ -39,6 +65,7 @@ export const loader = async ({ request }) => {
         },
       },
     );
+    console.log("Shop details response status:", responseOfShop.status);
 
     if (!responseOfShop.ok) {
       throw new Error(
@@ -59,7 +86,7 @@ export const loader = async ({ request }) => {
     const shopData = await shopQuery.json();
     const shopId = shopData.data.shop.id;
 
-    // Save appUrl metafield
+    //     // Save appUrl metafield
     await admin.graphql(`
       mutation SaveAppUrl {
         metafieldsSet(metafields: [
@@ -121,7 +148,7 @@ export const loader = async ({ request }) => {
 
     // Check app embed status
     let isAppEmbedded = false;
-    
+
     let appEmbedDetails = null;
 
     if (activeTheme?.id && appId) {
@@ -139,36 +166,36 @@ export const loader = async ({ request }) => {
           },
         );
 
-       if (appEmbedsResponse.ok) {
-  const appEmbedsData = await appEmbedsResponse.json();
-  const settingsData = JSON.parse(appEmbedsData.asset.value);
-  const currentBlocks = settingsData.current?.blocks || {};
-  // console.log("currentBlocks", currentBlocks);
+        if (appEmbedsResponse.ok) {
+          const appEmbedsData = await appEmbedsResponse.json();
+          const settingsData = JSON.parse(appEmbedsData.asset.value);
+          const currentBlocks = settingsData.current?.blocks || {};
+          // console.log("currentBlocks", currentBlocks);
 
-  // Extract handle from appId if needed, or set it manually
-  const appHandle = "autonotify-restock-alert"; // from your block.type
+          // Extract handle from appId if needed, or set it manually
+          const appHandle = "autonotify-restock-alert"; // from your block.type
 
-  const appBlockEntry = Object.entries(currentBlocks).find(
-    ([, block]) => block.type?.includes(appHandle)
-  );
+          const appBlockEntry = Object.entries(currentBlocks).find(
+            ([, block]) => block.type?.includes(appHandle)
+          );
 
-  if (appBlockEntry) {
-    const [blockId, appBlock] = appBlockEntry;
+          if (appBlockEntry) {
+            const [blockId, appBlock] = appBlockEntry;
 
-    isAppEmbedded = !appBlock.disabled;
-    // console.log("isAppEmbedded", isAppEmbedded);
+            isAppEmbedded = !appBlock.disabled;
+            // console.log("isAppEmbedded", isAppEmbedded);
 
-    appEmbedDetails = {
-      blockId,
-      blockType: appBlock.type,
-      settings: appBlock.settings || {},
-      disabled: appBlock.disabled || false,
-    };
-    // console.log("appEmbedDetails", appEmbedDetails);
-  } else {
-    console.log("No matching app block found for appHandle:", appHandle);
-  }
-}
+            appEmbedDetails = {
+              blockId,
+              blockType: appBlock.type,
+              settings: appBlock.settings || {},
+              disabled: appBlock.disabled || false,
+            };
+            // console.log("appEmbedDetails", appEmbedDetails);
+          } else {
+            console.log("No matching app block found for appHandle:", appHandle);
+          }
+        }
 
       } catch (embedError) {
         console.error("Error checking app embed:", embedError);
@@ -392,7 +419,7 @@ export default function NotifyDashboard() {
                         : "#"
                     }
                     target="_blank"
-                    external="true" 
+                    external="true"
                   >
                     Add app block
                   </Button>

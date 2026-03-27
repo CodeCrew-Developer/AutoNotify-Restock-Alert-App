@@ -136,7 +136,7 @@ const TableSkeleton = ({ rows = 5 }) => (
           <SkeletonDisplayText size="medium" />
           <SkeletonThumbnail size="small" />
         </InlineStack>
-        
+
         <Box>
           {Array.from({ length: rows }).map((_, index) => (
             <Box
@@ -168,7 +168,7 @@ const TableSkeleton = ({ rows = 5 }) => (
             </Box>
           ))}
         </Box>
-        
+
         <InlineStack align="center">
           <SkeletonThumbnail size="medium" />
         </InlineStack>
@@ -177,21 +177,21 @@ const TableSkeleton = ({ rows = 5 }) => (
   </Card>
 );
 
-const ProductTable = ({ 
-  title, 
-  products, 
-  badge, 
-  currentPage, 
-  onPageChange, 
+const ProductTable = ({
+  title,
+  products,
+  badge,
+  currentPage,
+  onPageChange,
   itemsPerPage = 10,
-  isLowStock = false 
+  isLowStock = false
 }) => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedProducts = products.slice(startIndex, endIndex);
   const totalPages = Math.ceil(products.length / itemsPerPage);
 
-  const headings = isLowStock 
+  const headings = isLowStock
     ? ["Product", "Variant", "Price", "Quantity", "Status", "Action"]
     : ["Product", "Variant", "Price", "Status", "Action"];
 
@@ -241,7 +241,7 @@ const ProductTable = ({
           <>
             <DataTable
               columnContentTypes={
-                isLowStock 
+                isLowStock
                   ? ["text", "text", "text", "numeric", "text", "text"]
                   : ["text", "text", "text", "text", "text"]
               }
@@ -266,7 +266,7 @@ const ProductTable = ({
             image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
           >
             <Text as="p" variant="bodyMd">
-              {isLowStock 
+              {isLowStock
                 ? "All products have sufficient stock levels."
                 : "Great news! All your products are currently in stock."
               }
@@ -280,10 +280,10 @@ const ProductTable = ({
 
 export default function StockDashboard() {
   const data = useLoaderData();
-  
+
   const [isOutOfStockLoading, setIsOutOfStockLoading] = useState(true);
   const [isLowStockLoading, setIsLowStockLoading] = useState(true);
-  
+
   const [outOfStockPage, setOutOfStockPage] = useState(1);
   const [lowStockPage, setLowStockPage] = useState(1);
 
@@ -298,8 +298,8 @@ export default function StockDashboard() {
   }, []);
 
   return (
-    <Page title="Stock Inventory Dashboard">
-      <TitleBar title="Stock Inventory Dashboard" />
+    <Page>
+      {/* <TitleBar title="Stock Inventory" /> */}
 
       <BlockStack gap="500">
         {/* Out of Stock Products */}

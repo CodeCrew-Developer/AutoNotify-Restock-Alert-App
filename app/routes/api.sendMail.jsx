@@ -14,7 +14,7 @@ export async function action({ request }) {
   if (request.method === "OPTIONS") {
     return cors(request, json({}));
   }
-
+  console.log("process.env.MAILBASE_URL", process.env.MAILBASE_URL)
   try {
     let admin;
     try {
@@ -25,20 +25,22 @@ export async function action({ request }) {
     }
 
     const data = await request.json();
-   
+    // console.log("Received sendMail request with data:", data);
+
 
     const to = data.recipientEmail || data.to;
     const subject = data.subject;
     const html = data.htmlTemplate || data.html;
+    console.log(`Parsed email details - To: ${to}, Subject: ${subject}, HTML length: ${html ? html.length : 0}`);
 
     if (!to || !subject || !html) {
       console.error("❌ Missing required fields:", { to: !!to, subject: !!subject, html: !!html });
       return cors(
         request,
         json(
-          { 
+          {
             success: false,
-            error: "Fields 'to' (or 'recipientEmail'), 'subject' and 'html' (or 'htmlTemplate') are required" 
+            error: "Fields 'to' (or 'recipientEmail'), 'subject' and 'html' (or 'htmlTemplate') are required"
           },
           { status: 400 }
         )
@@ -46,6 +48,8 @@ export async function action({ request }) {
     }
 
     const mailApiUrl = process.env.MAILBASE_URL + "/api/auto-notify/sendMail";
+    console.log(`📤 Sending email via Mail API at ${mailApiUrl} to: ${to}`);
+
 
     const response = await fetch(mailApiUrl, {
       method: "POST",
@@ -55,6 +59,7 @@ export async function action({ request }) {
       },
       body: JSON.stringify({ to, subject, html }),
     });
+    console.log(`📩 Mail API responded with status code: ${response.status}`);
 
     if (!response.ok) {
       const errText = await response.text();

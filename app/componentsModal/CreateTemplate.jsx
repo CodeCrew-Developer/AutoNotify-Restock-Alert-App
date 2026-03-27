@@ -17,22 +17,24 @@ import {
 } from "@shopify/polaris";
 import { useCallback, useEffect, useState } from "react";
 
+const CURRENT_YEAR = new Date().getFullYear();
+
 const DEFAULT_TEMPLATE = {
-  subject: "NOW! The product you subscribed is now restocked!",
-  
+  subject: "Good news! The item you were waiting for is back in stock.",
+
   headingColor: "#000000",
-  headingContent: "Back to Stock",
+  headingContent: "Back in Stock",
   logoImage: null,
   logoWidth: 150,
   logoHeight: 60,
   message:
-    "It's nice. We wanted to let you know that your principal will come back as a stock. Because we asked, we made sure that you are the first to borrow but we can't guarantee your team will stay available for long. It's the link below before it's gone!",
-  productName: "Pick 2-Senter Chain Right by IELM Design Studio",
+    `It's great news! We wanted to let you know your selected item is back in stock. As promised, you're among the first to know—but availability won't last long. Grab yours now using the link below before it's gone`,
+  productName: "Product Name",
   productPrice: "$74.80",
   buttonText: "Buy It Now",
   buttonColor: "#ffffff",
   buttonBackgroundColor: "#4CAF50",
-  copyright: "© 2022 Your Store Name",
+  copyright: `© ${CURRENT_YEAR} Your Store Name`,
   footerAlignment: "center",
   headingFontSize: 24,
   messageFontSize: 16,
@@ -62,7 +64,7 @@ const CreateTemplateModal = ({
 
   const [templateData, setTemplateData] = useState({
     ...DEFAULT_TEMPLATE,
-    copyright: `© 2022 ${shopName || "Your Store Name"}`,
+    copyright: `© ${CURRENT_YEAR} ${shopName || "Your Store Name"}`,
   });
 
   const [testEmail, setTestEmail] = useState(email || "");
@@ -132,7 +134,7 @@ const CreateTemplateModal = ({
           const mergedTemplate = {
             ...DEFAULT_TEMPLATE,
             ...existingTemplate,
-            copyright: existingTemplate.copyright || `© 2022 ${shopName}`,
+            copyright: existingTemplate.copyright || `© ${CURRENT_YEAR} ${shopName}`,
           };
 
           setTemplateData(mergedTemplate);
@@ -141,7 +143,7 @@ const CreateTemplateModal = ({
           // No existing template found, use default with shop name
           const defaultWithShop = {
             ...DEFAULT_TEMPLATE,
-            copyright: `© 2022 ${shopName}`,
+            copyright: `© ${CURRENT_YEAR} ${shopName}`,
           };
           setTemplateData(defaultWithShop);
           setTemplateLoaded(true);
@@ -155,7 +157,7 @@ const CreateTemplateModal = ({
         // Use default template with shop name on error
         const defaultWithShop = {
           ...DEFAULT_TEMPLATE,
-          copyright: `© 2022 ${shopName}`,
+          copyright: `© ${CURRENT_YEAR} ${shopName}`,
         };
         setTemplateData(defaultWithShop);
         setTemplateLoaded(true);
@@ -165,7 +167,7 @@ const CreateTemplateModal = ({
       // Use default template with shop name on error
       const defaultWithShop = {
         ...DEFAULT_TEMPLATE,
-        copyright: `© 2022 ${shopName}`,
+        copyright: `© ${CURRENT_YEAR} ${shopName}`,
       };
       setTemplateData(defaultWithShop);
       setTemplateLoaded(true);
@@ -245,7 +247,7 @@ const CreateTemplateModal = ({
   const validateTemplate = useCallback(() => {
     const required = [
       ["subject", "Subject"],
-     
+
       ["headingContent", "Heading content"],
       ["message", "Message"],
       ["productName", "Product name"],
@@ -254,7 +256,7 @@ const CreateTemplateModal = ({
       ["copyright", "Copyright"],
     ];
 
-    
+
 
     return errors;
   }, [templateData]);
@@ -311,7 +313,7 @@ const CreateTemplateModal = ({
       <p class="message">${data.message}</p>
       <div class="product-section">
         <div class="product-card">
-          <div class="product-content">
+          <div class="product-content" style="display: flex; gap: 10px;">
             <div class="product-image">
               <img style="background-color: #000; width: 100%; border-radius: 4px; height: 100%;">
             </div>
@@ -407,8 +409,8 @@ const CreateTemplateModal = ({
         body: JSON.stringify({
           recipientEmail: testEmail,
           subject: templateData.subject,
-          
-         
+
+
           htmlTemplate: generateHTML(),
           shopName,
           timestamp: new Date().toISOString(),
@@ -526,8 +528,8 @@ const CreateTemplateModal = ({
                       value={templateData.subject}
                       onChange={(v) => updateTemplate("subject", v)}
                     />
-                   
-                    
+
+
                   </BlockStack>
                 </Card>
 
@@ -666,11 +668,11 @@ const CreateTemplateModal = ({
                     <Text as="h2" variant="headingLg">
                       Product Details
                     </Text>
-                    <TextField
+                    {/* <TextField
                       label="Product Name"
                       value={templateData.productName}
                       onChange={(v) => updateTemplate("productName", v)}
-                    />
+                    /> */}
                     <BlockStack gap="200">
                       <Text variant="bodyMd" fontWeight="medium">
                         Product Name Font Size:{" "}
@@ -801,7 +803,7 @@ const CreateTemplateModal = ({
                       onChange={(v) => updateTemplate("footerAlignment", v[0])}
                     />
                     <TextField
-                      label="Details"
+                      label="Copyright Text"
                       value={templateData.copyright}
                       onChange={(v) => updateTemplate("copyright", v)}
                     />
@@ -843,8 +845,8 @@ const CreateTemplateModal = ({
                         </Text>
                         <Divider />
                       </BlockStack>
-                     
-                     
+
+
                       <Box
                         padding="300"
                         background="bg-surface"

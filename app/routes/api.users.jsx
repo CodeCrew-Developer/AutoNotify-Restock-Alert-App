@@ -68,21 +68,20 @@ export async function action({ request }) {
 
     // ✅ Handle PATCH for email flag update
     if (request.method === "PATCH" || data.action === "updateEmailFlag") {
-      const { email, productId, variantId, shopDomain, emailSent } = data;
+      const { email, productId, variantId, shopDomain, emailSent, emailStatus, messageId } = data;
 
       if (
         !email ||
         !productId ||
         !variantId ||
-        !shopDomain ||
-        emailSent === undefined
+        !shopDomain
       ) {
         return cors(
           request,
           new Response(
             JSON.stringify({
               error:
-                "Email, productId, variantId, shopDomain, and emailSent are required for flag update",
+                "Email, productId, variantId, and shopDomain are required for flag update",
             }),
             {
               status: 400,
@@ -92,25 +91,13 @@ export async function action({ request }) {
         );
       }
 
-      const existingUser = await users.findOne({
-        email: email.toLowerCase().trim(),
-        productId: productId.toString().trim(),
-        productTitle: productTitle.toString().trim(),
-        variantId: variantId.toString().trim(),
-        shopDomain, // 🔹 exact match
-      });
+      const updateData = {
+        updatedAt: new Date().toISOString(),
+      };
 
-      if (existingUser) {
-        console.log("👤 User details:", {
-          _id: existingUser._id,
-          email: existingUser.email,
-          productId: existingUser.productId,
-          productTitle: existingUser.productTitle,
-          variantId: existingUser.variantId,
-          shopDomain: existingUser.shopDomain,
-          currentEmailSent: existingUser.emailSent,
-        });
-      }
+      if (emailSent !== undefined) updateData.emailSent = emailSent; // backward compatibility
+      if (emailStatus) updateData.emailStatus = emailStatus;
+      if (messageId) updateData.messageId = messageId;
 
       const updatedUser = await users.findOneAndUpdate(
         {
@@ -119,10 +106,7 @@ export async function action({ request }) {
           variantId: variantId.toString().trim(),
           shopDomain, // 🔹 exact match only
         },
-        {
-          emailSent: emailSent,
-          updatedAt: new Date().toISOString(),
-        },
+        updateData,
         { new: true },
       );
 
@@ -258,7 +242,19 @@ export async function action({ request }) {
         variantId: userData.variantId,
         shopDomain: userData.shopDomain, // exact match
       },
-      { $setOnInsert: userData },
+      { 
+        $setOnInsert: {
+          productTitle: userData.productTitle,
+          createdAt: userData.createdAt,
+        },
+        $set: {
+          emailStatus: "pending",
+          emailSent: 0
+        },
+        $unset: {
+          messageId: 1
+        }
+      },
       { upsert: true, new: true },
     );
 
