@@ -14,7 +14,6 @@ export async function action({ request }) {
   if (request.method === "OPTIONS") {
     return cors(request, json({}));
   }
-  console.log("process.env.MAILBASE_URL", process.env.MAILBASE_URL)
   try {
     let admin;
     try {
@@ -25,8 +24,6 @@ export async function action({ request }) {
     }
 
     const data = await request.json();
-    // console.log("Received sendMail request with data:", data);
-
 
     const to = data.recipientEmail || data.to;
     const subject = data.subject;

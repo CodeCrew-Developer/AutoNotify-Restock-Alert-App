@@ -23,21 +23,17 @@ export const loader = async ({ request }) => {
   const appUrl = process.env.SHOPIFY_APP_URL;
   // console.log("App URL from env:", appUrl);
   const { admin, session } = await authenticate.admin(request);
-  console.log("Authenticated admin:", !!admin);
-  console.log("Session details:", {
-    shop: session?.shop,
-    userId: session?.userId,
-    expires: session?.expires,
-  });
+  // console.log("Authenticated admin:", !!admin);
+  // console.log("Session details:", session?.shop);
 
 
 
   try {
     const { shop, accessToken } = session;
-    console.log("Shop domain:", shop);
-    console.log("Access token:", accessToken);
+    // console.log("Shop domain:", shop);
+    // console.log("Access token:", accessToken);
     const appId = process.env.SHOPIFY_NOTIFY_ME_ID;
-    console.log("appIdappIdappId", appId)
+    // console.log("appIdappIdappId", appId)
 
     // Call email template API to ensure default template is created
     try {
@@ -65,7 +61,7 @@ export const loader = async ({ request }) => {
         },
       },
     );
-    console.log("Shop details response status:", responseOfShop.status);
+    // console.log("Shop details response status:", responseOfShop.status);
 
     if (!responseOfShop.ok) {
       throw new Error(

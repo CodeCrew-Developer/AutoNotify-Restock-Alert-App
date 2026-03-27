@@ -67,11 +67,15 @@ export async function action({ request }) {
         return json({ success: true, message: "None of the requested products are currently in stock." });
       }
 
-      const results = await sendRestockNotification(inStockVariants, manualShop, session.accessToken, { isManual: true });
+      const resultObj = await sendRestockNotification(inStockVariants, manualShop, session.accessToken, { isManual: true });
+      
       return json({ 
-        success: true, 
-        message: `Manual send complete. ${results.length} emails sent.`,
-        sentCount: results.length
+        success: resultObj.sentCount > 0, 
+        message: resultObj.sentCount > 0 
+          ? `Manual send complete. ${resultObj.sentCount} emails sent.`
+          : (resultObj.error || "Server error. No emails were sent."),
+        error: resultObj.error,
+        sentCount: resultObj.sentCount
       });
     }
 

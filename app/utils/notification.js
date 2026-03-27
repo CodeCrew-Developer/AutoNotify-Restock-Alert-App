@@ -203,10 +203,13 @@ export async function sendRestockNotification(restockedVariants, shop, token, op
       }
     }
 
-    return successfullyNotifiedEmails;
+    return { 
+      sentCount: successfullyNotifiedEmails.length, 
+      error: successfullyNotifiedEmails.length === 0 && matchingUsers.length > 0 ? "Server error: No emails were sent." : null 
+    };
   } catch (error) {
     console.error("Error sending restock notification:", error);
-    return [];
+    return { sentCount: 0, error: error.message };
   }
 }
 

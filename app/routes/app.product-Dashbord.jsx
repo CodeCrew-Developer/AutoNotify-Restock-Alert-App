@@ -16,6 +16,8 @@ import {
   SkeletonDisplayText,
   SkeletonThumbnail,
   Pagination,
+  FooterHelp,
+  Link,
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 import { authenticate, apiVersion } from "../shopify.server";
@@ -338,6 +340,15 @@ export default function StockDashboard() {
           </Layout.Section>
         </Layout>
       </BlockStack>
+      <FooterHelp>
+        <Text variant="bodyMd" monochrome>
+          Need help? Contact{' '}
+          <Link target="_blank" url="mailto:codecrewdeveloper@gmail.com">
+            Support
+          </Link>
+        </Text>
+      </FooterHelp>
     </Page>
+
   );
 }

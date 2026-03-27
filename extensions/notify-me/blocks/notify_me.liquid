@@ -787,7 +787,6 @@
     }
 
     const responseData = await response.json();
-    console.log('responseData>>>', responseData);
 
     if (responseData.data?.productVariant?.product?.variants?.edges) {
       if (responseData.data.productVariant?.product?.id) {
@@ -1028,7 +1027,6 @@ function updateUIForCurrentVariant(variantId) {
 
       const productId = currentProductId;
       const productTitle = currentProductTitle;
-      console.log('productTitle>>>', productTitle);
 
       const userData = {
         email: email.toLowerCase().trim(),
@@ -1071,7 +1069,6 @@ function updateUIForCurrentVariant(variantId) {
         })
         .catch((error) => {
           console.error('Error:', error);
-          alert(error.message || 'Something went wrong. Please try again.');
           submitBtn.textContent = originalText;
           submitBtn.disabled = false;
         });

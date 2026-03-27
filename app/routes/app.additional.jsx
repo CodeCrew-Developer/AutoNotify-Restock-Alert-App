@@ -11,11 +11,13 @@ import {
   DataTable,
   Divider,
   EmptyState,
+  FooterHelp,
   Frame,
   Grid,
   Icon,
   InlineStack,
   Layout,
+  Link,
   Page,
   Pagination,
   SkeletonBodyText,
@@ -118,6 +120,7 @@ export default function EnhancedUsersPage() {
   const [filteredUsers, setFilteredUsers] = React.useState(users);
   const [toastActive, setToastActive] = React.useState(false);
   const [toastMessage, setToastMessage] = React.useState("");
+  const [toastError, setToastError] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
   // ── ADDED: separate loading state for the Refresh button ──
@@ -127,7 +130,6 @@ export default function EnhancedUsersPage() {
   const [itemsPerPage] = React.useState(10);
   const [sortColumn, setSortColumn] = React.useState(3);
   const [sortDirection, setSortDirection] = React.useState("descending");
-  const [isBannerDismissed, setIsBannerDismissed] = React.useState(false);
 
   React.useEffect(() => {
     const timer = setTimeout(() => {
@@ -194,11 +196,13 @@ export default function EnhancedUsersPage() {
           setToastMessage(
             `Data Refreshed Successfully`,
           );
+          setToastError(false);
           setToastActive(true);
         }
       } catch (error) {
         console.error("Error refreshing data:", error);
         setToastMessage("Failed to refresh data. Please try again.");
+        setToastError(true);
         setToastActive(true);
       } finally {
         setIsRefreshing(false);
@@ -390,10 +394,6 @@ export default function EnhancedUsersPage() {
   // ── DETECTION LOGIC: If any recently sent email failed due to logic/SMTP ──
   const failedEmails = filteredUsers.filter((u) => u.emailStatus === "failed");
   const failedUsersCount = failedEmails.length;
-  const authErrorCount = 0;
-
-  const showCriticalBanner = authErrorCount > 0 && !isBannerDismissed;
-  const showGeneralErrorBanner = failedEmails.length > 0 && !showCriticalBanner && !isBannerDismissed;
 
   const baseNotified = users.filter((u) => u.emailStatus === "sent" || (u.emailSent || 0) > 0).length;
   const basePending = users.filter((u) => u.emailStatus !== "sent" && u.emailStatus !== "failed" && (u.emailSent || 0) === 0).length;
@@ -521,7 +521,14 @@ export default function EnhancedUsersPage() {
   ];
 
   const toastMarkup = toastActive ? (
-    <Toast content={toastMessage} onDismiss={() => setToastActive(false)} />
+    <Toast
+      content={toastMessage}
+      error={toastError}
+      onDismiss={() => {
+        setToastActive(false);
+        setToastError(false);
+      }}
+    />
   ) : null;
 
   const StatsSkeleton = () => (
@@ -826,16 +833,19 @@ export default function EnhancedUsersPage() {
         const result = await response.json();
         if (result.success) {
           setToastMessage(result.message || "Manual emails sent successfully");
+          setToastError(false);
           refreshData(false); // Refresh user list to see updated status
         } else {
-          throw new Error(result.error || "Failed to send manual emails");
+          setToastMessage(result.message || "Failed to send manual emails");
+          setToastError(true);
         }
       } else {
         throw new Error("Failed to send manual emails");
       }
     } catch (error) {
       console.error("Error manual send:", error);
-      setToastMessage(error.message || "Error sending emails manually");
+      setToastMessage(error.message || "Server Error. No emails were sent.");
+      setToastError(true);
     } finally {
       setLoading(false);
       setToastActive(true);
@@ -848,33 +858,6 @@ export default function EnhancedUsersPage() {
         {/* <TitleBar title=" Subscriber Management" /> */}
 
         <BlockStack gap="400">
-          {showCriticalBanner && (
-            <Banner
-              title="Temporary Notification Delay"
-              tone="warning"
-              onDismiss={() => setIsBannerDismissed(true)}
-            >
-              <p>
-                We are experiencing a temporary delay in sending restock notifications.
-                Our team has been alerted and is already working on a fix. Thank you
-                for your patience!
-              </p>
-            </Banner>
-          )}
-
-          {showGeneralErrorBanner && (
-            <Banner
-              title="Notification Processing"
-              tone="info"
-              onDismiss={() => setIsBannerDismissed(true)}
-            >
-              <p>
-                A few notifications are taking longer than usual to process. We are
-                monitoring the situation to ensure all alerts are delivered soon.
-              </p>
-            </Banner>
-          )}
-
           <Layout>
             <Layout.Section>
               {isLoading ? (
@@ -1195,6 +1178,14 @@ export default function EnhancedUsersPage() {
 
         {toastMarkup}
       </Page>
+      <FooterHelp>
+        <Text variant="bodyMd" monochrome>
+          Need help? Contact{' '}
+          <Link target="_blank" url="mailto:codecrewdeveloper@gmail.com">
+            Support
+          </Link>
+        </Text>
+      </FooterHelp>
     </Frame>
   );
 }
