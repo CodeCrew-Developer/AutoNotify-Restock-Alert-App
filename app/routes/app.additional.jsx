@@ -1127,14 +1127,9 @@ export default function EnhancedUsersPage() {
                             <BlockStack gap="300">
                               <InlineStack align="space-between">
                                 <Text variant="bodyMd" fontWeight="bold">Status: In Progress...</Text>
-                                <InlineStack gap="200">
-                                  <Text variant="bodyMd" monochrome>{progressCurrent} of {progressTotal} Completed</Text>
-                                  {progressFailed > 0 && (
-                                    <Text variant="bodyMd" tone="critical">({progressFailed} Failed)</Text>
-                                  )}
-                                </InlineStack>
+                                <Text variant="bodyMd" monochrome>{progressCurrent} of {progressTotal} Completed</Text>
                               </InlineStack>
-                              <ProgressBar progress={(progressCurrent / progressTotal) * 100} size="small" tone={progressFailed > 0 ? "critical" : "primary"} />
+                              <ProgressBar progress={(progressCurrent / progressTotal) * 100} size="small" tone="primary" />
                               <Divider />
                             </BlockStack>
                           </Box>
