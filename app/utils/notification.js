@@ -121,7 +121,7 @@ export async function sendRestockNotification(restockedVariants, shop, token, op
     }
 
     if (isManual) {
-      manualSendProgress.set(shop, { total: recipientEmails.length, current: 0, status: "processing" });
+      manualSendProgress.set(shop, { total: recipientEmails.length, current: 0, failedCount: 0, status: "processing" });
     }
 
     const itemsHtml = restockedVariants
@@ -216,7 +216,11 @@ export async function sendRestockNotification(restockedVariants, shop, token, op
       if (isManual) {
         const prog = manualSendProgress.get(shop);
         if (prog) {
-          manualSendProgress.set(shop, { ...prog, current: i + 1 });
+          manualSendProgress.set(shop, { 
+            ...prog, 
+            current: i + 1,
+            failedCount: (prog.failedCount || 0) + (successfullyNotifiedEmails.includes(email) ? 0 : 1)
+          });
         }
       }
 
@@ -242,6 +246,11 @@ export async function sendRestockNotification(restockedVariants, shop, token, op
     };
   } catch (error) {
     console.error("Error sending restock notification:", error);
+    if (isManual) {
+      manualSendProgress.set(shop, { status: "failed", error: error.message });
+      // Clear progress after 1 minute to keep memory clean
+      setTimeout(() => manualSendProgress.delete(shop), 60000);
+    }
     return { sentCount: 0, error: error.message };
   }
 }

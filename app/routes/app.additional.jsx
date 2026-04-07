@@ -134,6 +134,7 @@ export default function EnhancedUsersPage() {
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [progressCurrent, setProgressCurrent] = React.useState(0);
   const [progressTotal, setProgressTotal] = React.useState(0);
+  const [progressFailed, setProgressFailed] = React.useState(0);
   const [isPolling, setIsPolling] = React.useState(false);
 
   React.useEffect(() => {
@@ -155,12 +156,27 @@ export default function EnhancedUsersPage() {
               setIsProcessing(true);
               setProgressCurrent(data.current);
               setProgressTotal(data.total);
+              setProgressFailed(data.failedCount || 0);
             } else if (data.status === "completed") {
               setIsProcessing(false);
               setIsPolling(false);
               setProgressCurrent(0);
               setProgressTotal(0);
+              setProgressFailed(0);
+              setToastMessage("Notification process completed successfully.");
+              setToastError(false);
+              setToastActive(true);
               refreshData(false); // Final refresh
+            } else if (data.status === "failed") {
+              setIsProcessing(false);
+              setIsPolling(false);
+              setProgressCurrent(0);
+              setProgressTotal(0);
+              setProgressFailed(0);
+              setToastMessage(data.error || "Notification process failed.");
+              setToastError(true);
+              setToastActive(true);
+              refreshData(true);
             } else {
               setIsPolling(false);
               setIsProcessing(false);
@@ -1111,9 +1127,14 @@ export default function EnhancedUsersPage() {
                             <BlockStack gap="300">
                               <InlineStack align="space-between">
                                 <Text variant="bodyMd" fontWeight="bold">Status: In Progress...</Text>
-                                <Text variant="bodyMd" monochrome>{progressCurrent} of {progressTotal} Completed</Text>
+                                <InlineStack gap="200">
+                                  <Text variant="bodyMd" monochrome>{progressCurrent} of {progressTotal} Completed</Text>
+                                  {progressFailed > 0 && (
+                                    <Text variant="bodyMd" tone="critical">({progressFailed} Failed)</Text>
+                                  )}
+                                </InlineStack>
                               </InlineStack>
-                              <ProgressBar progress={(progressCurrent / progressTotal) * 100} size="small" tone="primary" />
+                              <ProgressBar progress={(progressCurrent / progressTotal) * 100} size="small" tone={progressFailed > 0 ? "critical" : "primary"} />
                               <Divider />
                             </BlockStack>
                           </Box>
