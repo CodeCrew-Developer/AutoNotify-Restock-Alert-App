@@ -54,7 +54,6 @@ export const loader = async ({ request }) => {
   let webhookExists = false;
   let shopDetail = {};
   let shopSettings = null;
-  let storeLogo = "";
 
   try {
     // Part A: Essential shop data
@@ -74,28 +73,6 @@ export const loader = async ({ request }) => {
       console.error("Error fetching basic shop info (additional):", basicError);
     }
 
-    // Part B: Optional brand info
-    try {
-      const brandGraphql = await admin.graphql(`
-        {
-          shop {
-            brand {
-              logo {
-                image {
-                  url
-                }
-              }
-            }
-          }
-        }
-      `);
-      const brandJson = await brandGraphql.json();
-      if (!brandJson.errors) {
-        storeLogo = brandJson?.data?.shop?.brand?.logo?.image?.url || "";
-      }
-    } catch (brandError) {
-      // console.warn("Brand info not available via GraphQL (additional)");
-    }
 
     const usersResponse = await fetch(
       `${API_ENDPOINT}?shopDomain=${shopDetail.myshopifyDomain || ""}`,
@@ -136,7 +113,6 @@ export const loader = async ({ request }) => {
     shopDomain: shopDetail.myshopifyDomain,
     appUrl,
     shopSettings,
-    storeLogo,
   };
 };
 
@@ -1282,7 +1258,6 @@ export default function EnhancedUsersPage() {
           session={session}
           setShowTemplateEditor={setShowTemplateEditor}
           appUrl={appUrl}
-          storeLogo={data.storeLogo}
         />
 
         {toastMarkup}

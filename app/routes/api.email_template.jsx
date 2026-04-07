@@ -1,21 +1,22 @@
 import EmailTemplate from "../modes/emailTemplate";
 
 // Default template structure
+const CURRENT_YEAR = new Date().getFullYear();
 const DEFAULT_TEMPLATE_DATA = {
-  subject: "NOW! The product you subscribed is now restocked!",
+  subject: "The product you subscribed to is now back in stock!",
   headingColor: "#000000",
-  headingContent: "Back to Stock",
+  headingContent: "Back in Stock",
   logoImage: null,
   logoWidth: 150,
   logoHeight: 60,
   message:
-    "It's nice. We wanted to let you know that your principal will come back as a stock. Because we asked, we made sure that you are the first to borrow but we can't guarantee your team will stay available for long. It's the link below before it's gone!",
+    "Good news! The product you've been waiting for is back in stock. We've reserved one for you, but it won't last long. Click the link below to grab it before it's gone!",
   productName: "Pick 2-Senter Chain Right by IELM Design Studio",
   productPrice: "$74.80",
   buttonText: "Buy It Now",
   buttonColor: "#ffffff",
   buttonBackgroundColor: "#4CAF50",
-  copyright: "© 2022 Your Store Name",
+  copyright: `© ${CURRENT_YEAR} Your Store Name`,
   footerAlignment: "center",
   headingFontSize: 24,
   messageFontSize: 16,
@@ -28,11 +29,10 @@ const DEFAULT_TEMPLATE_DATA = {
 };
 
 // Function to generate default HTML template
-function generateDefaultHTML(shop, logoImage = null) {
+function generateDefaultHTML(shop) {
   const data = {
     ...DEFAULT_TEMPLATE_DATA,
-    logoImage: logoImage || DEFAULT_TEMPLATE_DATA.logoImage,
-    copyright: `© 2022 ${shop || "Your Store Name"}`,
+    copyright: `© ${CURRENT_YEAR} ${shop || "Your Store Name"}`,
   };
 
   return `<!DOCTYPE html>
@@ -106,7 +106,7 @@ function generateDefaultHTML(shop, logoImage = null) {
 }
 
 // Function to create default template if it doesn't exist
-async function ensureDefaultTemplate(shopName, logoImage = null) {
+async function ensureDefaultTemplate(shopName) {
   if (!shopName) return null;
 
   try {
@@ -118,9 +118,7 @@ async function ensureDefaultTemplate(shopName, logoImage = null) {
       const defaultTemplate = new EmailTemplate({
         shopName,
         ...DEFAULT_TEMPLATE_DATA,
-        logoImage: logoImage || DEFAULT_TEMPLATE_DATA.logoImage,
-        copyright: `© 2022 ${shopName}`,
-        htmlTemplate: generateDefaultHTML(shopName, logoImage),
+        htmlTemplate: generateDefaultHTML(shopName),
         timestamp: new Date(),
       });
 
@@ -142,7 +140,6 @@ export async function loader({ request }) {
 
     const name = url.searchParams.get("name") || "Guest";
     const shopName = url.searchParams.get("shopName");
-    const logoURL = url.searchParams.get("logoURL");
     const limit = url.searchParams.get("limit");
     const page = url.searchParams.get("page");
 
@@ -153,7 +150,7 @@ export async function loader({ request }) {
       console.log(`🔍 Fetching templates for shop: ${shopName}`);
       query.shopName = shopName;
       // Ensure default template exists for this shop
-      await ensureDefaultTemplate(shopName, logoURL);
+      await ensureDefaultTemplate(shopName);
     }
 
     if (limit) {

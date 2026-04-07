@@ -73,44 +73,14 @@ export const loader = async ({ request }) => {
       console.error("Error fetching basic shop ID:", basicError);
     }
 
-    // Get brand info - Optional (might not exist in all API versions/shops)
-    let storeLogo = "";
-    try {
-      const brandQuery = await admin.graphql(`
-        query {
-          shop {
-            brand {
-              logo {
-                image {
-                  url
-                }
-              }
-            }
-          }
-        }
-      `);
-      const brandData = await brandQuery.json();
-      
-      if (brandData.errors) {
-        // Skip logging if it's just the 'field doesn't exist' error to avoid spamming logs
-        if (!brandData.errors[0]?.message?.includes("doesn't exist")) {
-           console.error("GraphQL errors in brandQuery:", brandData.errors);
-        }
-      } else {
-        storeLogo = brandData?.data?.shop?.brand?.logo?.image?.url || "";
-      }
-    } catch (brandError) {
-      // Intentionally silent or a subtle warning as this is expected on some shops/versions
-      // console.warn("Brand info not available via GraphQL");
-    }
 
     if (!shopId) {
       console.warn("Warning: shopId is missing, some functionality might be limited");
     }
 
-    // Call email template API to ensure default template is created with store logo
+    // Call email template API to ensure default template is created
     try {
-      const templateApiUrl = `${appUrl}/api/email_template?shopName=${encodeURIComponent(shop)}&logoURL=${encodeURIComponent(storeLogo)}`;
+      const templateApiUrl = `${appUrl}/api/email_template?shopName=${encodeURIComponent(shop)}`;
       await fetch(templateApiUrl, {
         method: "GET",
         headers: {

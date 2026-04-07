@@ -53,7 +53,6 @@ const CreateTemplateModal = ({
   session,
   email,
   appUrl,
-  storeLogo,
 }) => {
   const API_ENDPOINTS = {
     template: appUrl + "/api/email_template",
@@ -65,7 +64,6 @@ const CreateTemplateModal = ({
 
   const [templateData, setTemplateData] = useState({
     ...DEFAULT_TEMPLATE,
-    copyright: `© ${CURRENT_YEAR} ${shopName || "Your Store Name"}`,
   });
 
   const [testEmail, setTestEmail] = useState(email || "");
@@ -141,10 +139,9 @@ const CreateTemplateModal = ({
           setTemplateData(mergedTemplate);
           setTemplateLoaded(true);
         } else {
-          // No existing template found, use default with shop name and store logo
+          // No existing template found, use default with shop name
           const defaultWithShop = {
             ...DEFAULT_TEMPLATE,
-            logoImage: storeLogo || DEFAULT_TEMPLATE.logoImage,
             copyright: `© ${CURRENT_YEAR} ${shopName}`,
           };
           setTemplateData(defaultWithShop);
@@ -156,10 +153,9 @@ const CreateTemplateModal = ({
         }
       } else {
         console.error("Failed to fetch template, status:", response.status);
-        // Use default template with shop name and store logo on error
+        // Use default template with shop name on error
         const defaultWithShop = {
           ...DEFAULT_TEMPLATE,
-          logoImage: storeLogo || DEFAULT_TEMPLATE.logoImage,
           copyright: `© ${CURRENT_YEAR} ${shopName}`,
         };
         setTemplateData(defaultWithShop);
@@ -167,10 +163,9 @@ const CreateTemplateModal = ({
       }
     } catch (error) {
       console.error("Error fetching template:", error);
-      // Use default template with shop name and store logo on error
+      // Use default template with shop name on error
       const defaultWithShop = {
         ...DEFAULT_TEMPLATE,
-        logoImage: storeLogo || DEFAULT_TEMPLATE.logoImage,
         copyright: `© ${CURRENT_YEAR} ${shopName}`,
       };
       setTemplateData(defaultWithShop);
