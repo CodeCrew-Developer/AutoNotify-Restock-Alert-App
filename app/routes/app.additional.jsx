@@ -57,28 +57,45 @@ export const loader = async ({ request }) => {
   let storeLogo = "";
 
   try {
-    const shopGraphql = await admin.graphql(`
-      {
-        shop {
-          name
-          email
-          myshopifyDomain
-          brand {
-            logo {
-              image {
-                url
+    // Part A: Essential shop data
+    try {
+      const basicShopQuery = await admin.graphql(`
+        {
+          shop {
+            name
+            email
+            myshopifyDomain
+          }
+        }
+      `);
+      const basicShopData = await basicShopQuery.json();
+      shopDetail = basicShopData?.data?.shop || {};
+    } catch (basicError) {
+      console.error("Error fetching basic shop info (additional):", basicError);
+    }
+
+    // Part B: Optional brand info
+    try {
+      const brandGraphql = await admin.graphql(`
+        {
+          shop {
+            brand {
+              logo {
+                image {
+                  url
+                }
               }
             }
           }
         }
+      `);
+      const brandJson = await brandGraphql.json();
+      if (!brandJson.errors) {
+        storeLogo = brandJson?.data?.shop?.brand?.logo?.image?.url || "";
       }
-    `);
-    const shopJson = await shopGraphql.json();
-    if (shopJson.errors) {
-      console.error("GraphQL errors in shopQuery (additional):", shopJson.errors);
+    } catch (brandError) {
+      // console.warn("Brand info not available via GraphQL (additional)");
     }
-    shopDetail = shopJson?.data?.shop || {};
-    storeLogo = shopDetail?.brand?.logo?.image?.url || "";
 
     const usersResponse = await fetch(
       `${API_ENDPOINT}?shopDomain=${shopDetail.myshopifyDomain || ""}`,

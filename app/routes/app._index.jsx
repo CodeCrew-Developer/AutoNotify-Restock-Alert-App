@@ -57,33 +57,55 @@ export const loader = async ({ request }) => {
 
     const shopDetails = await responseOfShop.json();
 
-    // Get shop ID and brand info
-    const shopQuery = await admin.graphql(`
-      query {
-        shop {
-          id
-          brand {
-            logo {
-              image {
-                url
+    // Get shop ID - Essential for metafields etc.
+    let shopId = null;
+    try {
+      const basicShopQuery = await admin.graphql(`
+        query {
+          shop {
+            id
+          }
+        }
+      `);
+      const basicShopData = await basicShopQuery.json();
+      shopId = basicShopData?.data?.shop?.id;
+    } catch (basicError) {
+      console.error("Error fetching basic shop ID:", basicError);
+    }
+
+    // Get brand info - Optional (might not exist in all API versions/shops)
+    let storeLogo = "";
+    try {
+      const brandQuery = await admin.graphql(`
+        query {
+          shop {
+            brand {
+              logo {
+                image {
+                  url
+                }
               }
             }
           }
         }
+      `);
+      const brandData = await brandQuery.json();
+      
+      if (brandData.errors) {
+        // Skip logging if it's just the 'field doesn't exist' error to avoid spamming logs
+        if (!brandData.errors[0]?.message?.includes("doesn't exist")) {
+           console.error("GraphQL errors in brandQuery:", brandData.errors);
+        }
+      } else {
+        storeLogo = brandData?.data?.shop?.brand?.logo?.image?.url || "";
       }
-    `);
-    const shopData = await shopQuery.json();
-    
-    if (shopData.errors) {
-      console.error("GraphQL errors in shopQuery:", shopData.errors);
+    } catch (brandError) {
+      // Intentionally silent or a subtle warning as this is expected on some shops/versions
+      // console.warn("Brand info not available via GraphQL");
     }
 
-    const shopId = shopData?.data?.shop?.id;
-    const storeLogo = shopData?.data?.shop?.brand?.logo?.image?.url || "";
-    // console.log("Store Brand Logo:", storeLogo);
-
     if (!shopId) {
-      console.warn("Could not retrieve shop ID from GraphQL");
+      console.warn("Warning: shopId is missing, some functionality might be limited");
     }
 
     // Call email template API to ensure default template is created with store logo
@@ -95,10 +117,10 @@ export const loader = async ({ request }) => {
           "Content-Type": "application/json",
         },
       });
-      console.log(`✅ Default template ensured for shop: ${shop}`);
+      // console.log(`✅ Default template ensured for shop: ${shop}`);
     } catch (templateError) {
       console.error("Error ensuring default template:", templateError);
-      // Continue with loader even if template creation fails
+      // Continue even if template creation fails
     }
 
     //     // Save appUrl metafield
