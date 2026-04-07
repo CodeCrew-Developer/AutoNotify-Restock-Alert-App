@@ -73,9 +73,18 @@ export const loader = async ({ request }) => {
       }
     `);
     const shopData = await shopQuery.json();
-    const shopId = shopData.data.shop.id;
-    const storeLogo = shopData.data.shop.brand?.logo?.image?.url || "";
+    
+    if (shopData.errors) {
+      console.error("GraphQL errors in shopQuery:", shopData.errors);
+    }
+
+    const shopId = shopData?.data?.shop?.id;
+    const storeLogo = shopData?.data?.shop?.brand?.logo?.image?.url || "";
     // console.log("Store Brand Logo:", storeLogo);
+
+    if (!shopId) {
+      console.warn("Could not retrieve shop ID from GraphQL");
+    }
 
     // Call email template API to ensure default template is created with store logo
     try {
@@ -93,64 +102,82 @@ export const loader = async ({ request }) => {
     }
 
     //     // Save appUrl metafield
-    await admin.graphql(`
-      mutation SaveAppUrl {
-        metafieldsSet(metafields: [
-          {
-            namespace: "custom"
-            key: "app_url"
-            type: "single_line_text_field"
-            value: "${appUrl}"
-            ownerId: "${shopId}"
+    if (shopId && appUrl) {
+      try {
+        await admin.graphql(`
+          mutation SaveAppUrl {
+            metafieldsSet(metafields: [
+              {
+                namespace: "custom"
+                key: "app_url"
+                type: "single_line_text_field"
+                value: "${appUrl}"
+                ownerId: "${shopId}"
+              }
+            ]) {
+              metafields { id key value }
+              userErrors { field message }
+            }
           }
-        ]) {
-          metafields { id key value }
-          userErrors { field message }
-        }
+        `);
+      } catch (metafieldError) {
+        console.error("Error saving appUrl metafield:", metafieldError);
       }
-    `);
+    }
 
     // Get themes
-    const themeResponse = await admin.graphql(`
-      query {
-        themes(first: 20) {
-          edges {
-            node {
-              id
-              name
-              role
+    let themeNames = [];
+    let activeTheme = null;
+    try {
+      const themeResponse = await admin.graphql(`
+        query {
+          themes(first: 20) {
+            edges {
+              node {
+                id
+                name
+                role
+              }
             }
           }
         }
-      }
-    `);
-    const themeJson = await themeResponse.json();
-    const themeNames = themeJson.data.themes.edges;
-    const activeTheme = themeNames.find((t) => t.node.role === "MAIN")?.node;
+      `);
+      const themeJson = await themeResponse.json();
+      themeNames = themeJson?.data?.themes?.edges || [];
+      activeTheme = themeNames.find((t) => t.node.role === "MAIN")?.node;
+    } catch (themeError) {
+      console.error("Error fetching themes:", themeError);
+    }
 
     // Save access token and block ID metafields
-    await admin.graphql(`
-      mutation {
-        metafieldsSet(metafields: [
-          {
-            ownerId: "${shopId}",
-            namespace: "accesstoken",
-            key: "token",
-            value: "${accessToken}",
-            type: "string"
-          },
-          {
-            ownerId: "${shopId}",
-            namespace: "blockID",
-            key: "blockID",
-            value: "${appId}",
-            type: "string"
+    if (shopId && accessToken && appId) {
+      try {
+        await admin.graphql(`
+          mutation {
+            metafieldsSet(metafields: [
+              {
+                ownerId: "${shopId}",
+                namespace: "accesstoken",
+                key: "token",
+                value: "${accessToken}",
+                type: "string"
+              },
+              {
+                ownerId: "${shopId}",
+                namespace: "blockID",
+                key: "blockID",
+                value: "${appId}",
+                type: "string"
+              }
+            ]) {
+              metafields { id }
+            }
           }
-        ]) {
-          metafields { id }
-        }
+        `);
+      } catch (metafieldError) {
+        console.error("Error saving access token metafields:", metafieldError);
       }
-    `);
+    }
 
     // Check app embed status
     let isAppEmbedded = false;

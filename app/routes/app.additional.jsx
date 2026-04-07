@@ -74,11 +74,14 @@ export const loader = async ({ request }) => {
       }
     `);
     const shopJson = await shopGraphql.json();
-    shopDetail = shopJson.data.shop;
-    storeLogo = shopDetail.brand?.logo?.image?.url || "";
+    if (shopJson.errors) {
+      console.error("GraphQL errors in shopQuery (additional):", shopJson.errors);
+    }
+    shopDetail = shopJson?.data?.shop || {};
+    storeLogo = shopDetail?.brand?.logo?.image?.url || "";
 
     const usersResponse = await fetch(
-      `${API_ENDPOINT}?shopDomain=${shopDetail.myshopifyDomain}`,
+      `${API_ENDPOINT}?shopDomain=${shopDetail.myshopifyDomain || ""}`,
     );
     if (usersResponse.ok) {
       const usersData = await usersResponse.json();
