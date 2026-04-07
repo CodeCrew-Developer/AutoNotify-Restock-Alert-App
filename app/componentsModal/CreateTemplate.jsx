@@ -53,6 +53,7 @@ const CreateTemplateModal = ({
   session,
   email,
   appUrl,
+  actualShopName,
 }) => {
   const API_ENDPOINTS = {
     template: appUrl + "/api/email_template",
@@ -64,6 +65,7 @@ const CreateTemplateModal = ({
 
   const [templateData, setTemplateData] = useState({
     ...DEFAULT_TEMPLATE,
+    copyright: `© ${CURRENT_YEAR} ${actualShopName || "Your Store Name"}`,
   });
 
   const [testEmail, setTestEmail] = useState(email || "");
@@ -142,7 +144,7 @@ const CreateTemplateModal = ({
           // No existing template found, use default with shop name
           const defaultWithShop = {
             ...DEFAULT_TEMPLATE,
-            copyright: `© ${CURRENT_YEAR} ${shopName}`,
+            copyright: `© ${CURRENT_YEAR} ${actualShopName || shopName || "Your Store Name"}`,
           };
           setTemplateData(defaultWithShop);
           setTemplateLoaded(true);
@@ -156,7 +158,7 @@ const CreateTemplateModal = ({
         // Use default template with shop name on error
         const defaultWithShop = {
           ...DEFAULT_TEMPLATE,
-          copyright: `© ${CURRENT_YEAR} ${shopName}`,
+          copyright: `© ${CURRENT_YEAR} ${actualShopName || shopName || "Your Store Name"}`,
         };
         setTemplateData(defaultWithShop);
         setTemplateLoaded(true);
@@ -166,7 +168,7 @@ const CreateTemplateModal = ({
       // Use default template with shop name on error
       const defaultWithShop = {
         ...DEFAULT_TEMPLATE,
-        copyright: `© ${CURRENT_YEAR} ${shopName}`,
+        copyright: `© ${CURRENT_YEAR} ${actualShopName || shopName || "Your Store Name"}`,
       };
       setTemplateData(defaultWithShop);
       setTemplateLoaded(true);

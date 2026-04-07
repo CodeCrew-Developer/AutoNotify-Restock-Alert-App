@@ -80,7 +80,8 @@ export const loader = async ({ request }) => {
 
     // Call email template API to ensure default template is created
     try {
-      const templateApiUrl = `${appUrl}/api/email_template?shopName=${encodeURIComponent(shop)}`;
+      const actualShopName = shopDetails?.shop?.name || shop;
+      const templateApiUrl = `${appUrl}/api/email_template?shopName=${encodeURIComponent(shop)}&actualShopName=${encodeURIComponent(actualShopName)}`;
       await fetch(templateApiUrl, {
         method: "GET",
         headers: {

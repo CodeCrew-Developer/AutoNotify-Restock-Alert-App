@@ -113,6 +113,7 @@ export const loader = async ({ request }) => {
     shopDomain: shopDetail.myshopifyDomain,
     appUrl,
     shopSettings,
+    actualShopName: shopDetail.name,
   };
 };
 
@@ -1258,6 +1259,7 @@ export default function EnhancedUsersPage() {
           session={session}
           setShowTemplateEditor={setShowTemplateEditor}
           appUrl={appUrl}
+          actualShopName={data.actualShopName}
         />
 
         {toastMarkup}

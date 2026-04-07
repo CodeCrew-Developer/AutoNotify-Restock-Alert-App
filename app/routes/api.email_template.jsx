@@ -29,10 +29,10 @@ const DEFAULT_TEMPLATE_DATA = {
 };
 
 // Function to generate default HTML template
-function generateDefaultHTML(shop) {
+function generateDefaultHTML(shop, actualShopName = null) {
   const data = {
     ...DEFAULT_TEMPLATE_DATA,
-    copyright: `© ${CURRENT_YEAR} ${shop || "Your Store Name"}`,
+    copyright: `© ${CURRENT_YEAR} ${actualShopName || shop || "Your Store Name"}`,
   };
 
   return `<!DOCTYPE html>
@@ -106,7 +106,7 @@ function generateDefaultHTML(shop) {
 }
 
 // Function to create default template if it doesn't exist
-async function ensureDefaultTemplate(shopName) {
+async function ensureDefaultTemplate(shopName, actualShopName = null) {
   if (!shopName) return null;
 
   try {
@@ -118,7 +118,8 @@ async function ensureDefaultTemplate(shopName) {
       const defaultTemplate = new EmailTemplate({
         shopName,
         ...DEFAULT_TEMPLATE_DATA,
-        htmlTemplate: generateDefaultHTML(shopName),
+        copyright: `© ${CURRENT_YEAR} ${actualShopName || shopName || "Your Store Name"}`,
+        htmlTemplate: generateDefaultHTML(shopName, actualShopName),
         timestamp: new Date(),
       });
 
@@ -147,10 +148,11 @@ export async function loader({ request }) {
     let options = {};
 
     if (shopName) {
+      const actualShopName = url.searchParams.get("actualShopName");
       console.log(`🔍 Fetching templates for shop: ${shopName}`);
       query.shopName = shopName;
       // Ensure default template exists for this shop
-      await ensureDefaultTemplate(shopName);
+      await ensureDefaultTemplate(shopName, actualShopName);
     }
 
     if (limit) {
