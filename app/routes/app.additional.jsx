@@ -495,9 +495,11 @@ export default function EnhancedUsersPage() {
       </BlockStack>,
       <BlockStack gap="100" key={`product-${index}`}>
         {user.productTitle && (
-          <Text as="p" variant="bodyMd" fontWeight="medium">
-            Product: {user.productTitle || "null"}
-          </Text>
+          <Tooltip content={user.productTitle} dismissOnMouseOut>
+            <Text truncate as="p" variant="bodyMd" fontWeight="medium">
+              Product: {user.productTitle || "null"}
+            </Text>
+          </Tooltip>
         )}
         <Text as="p" variant="bodySm" fontWeight="medium">
           Variant ID: {user.variantId || "No variant ID"}
