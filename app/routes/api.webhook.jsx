@@ -2,6 +2,7 @@ import { json } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
 import prisma from "../db.server";
 import { sendRestockNotification, manualSendProgress } from "../utils/notification";
+import User from "../modes/users";
 
 export async function loader({ request }) {
   const url = new URL(request.url);
@@ -27,14 +28,9 @@ export async function action({ request }) {
       const { session, admin } = await authenticate.admin(request);
       const manualShop = session.shop;
 
-      // Fetch pending or failed users
-      const usersApi = `${process.env.SHOPIFY_APP_URL}/api/users?shopDomain=${manualShop}`;
-      const usersResponse = await fetch(usersApi);
-      if (!usersResponse.ok) {
-        throw new Error(`Failed to fetch users: ${usersResponse.status}`);
-      }
-      const usersJson = await usersResponse.json();
-      const pendingUsers = (usersJson.users || []).filter(user => 
+      // Fetch pending or failed users directly from DB
+      const usersArray = await User.find({ shopDomain: manualShop }).lean();
+      const pendingUsers = (usersArray || []).filter(user => 
         (user.emailStatus === "pending" || user.emailStatus === "failed") ||
         (!user.emailStatus && (user.emailSent || 0) === 0)
       );

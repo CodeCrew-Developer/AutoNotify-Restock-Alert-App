@@ -1,3 +1,5 @@
+import User, { ShopSettings } from "../modes/users";
+import EmailTemplate from "../modes/emailTemplate";
 
 const recentlyNotified = new Map();
 const NOTIFY_COOLDOWN_MS = 5 * 60 * 1000;
@@ -9,45 +11,22 @@ export async function sendRestockNotification(restockedVariants, shop, token, op
   if (!shop) {
     throw new Error("❌ Shop name is required to fetch template and users");
   }
-  const templateApi = `${process.env.SHOPIFY_APP_URL}/api/email_template?shopName=${encodeURIComponent(shop)}`;
-  const usersApi = `${process.env.SHOPIFY_APP_URL}/api/users?shopDomain=${shop}`;
-
   try {
-    const usersResponse = await fetch(usersApi);
-
-    if (!usersResponse.ok) {
-      console.error(" Users fetch failed:", usersResponse.status);
-      throw new Error("Failed to fetch users");
-    }
-
-    const usersJson = await usersResponse.json();
-    const usersArray = usersJson.users || [];
-    const shopSettings = usersJson.shopSettings || {};
+    // FETCH USERS DIRECTLY FROM DB
+    const usersArray = await User.find({ shopDomain: shop }).lean();
+    const shopSettings = await ShopSettings.findOne({ shopDomain: shop }).lean() || {};
 
     if (!isManual && !shopSettings.autoEmailGloballyEnabled) {
       console.log(`⚠️ Auto-email is disabled for shop: ${shop}`);
       return [];
     }
 
-    // FETCH EMAIL TEMPLATE
-    const templateResponse = await fetch(templateApi);
-
-    if (!templateResponse.ok) {
-      console.error("❌ Template fetch failed:", templateResponse.status);
-      throw new Error("Failed to fetch email template");
-    }
-
-    const templateJson = await templateResponse.json();
-    const templateData = templateJson?.data?.emailTemplates?.[0];
+    // FETCH EMAIL TEMPLATE DIRECTLY FROM DB
+    const templateData = await EmailTemplate.findOne({ shopName: shop }).lean();
 
     if (!templateData) {
       console.error("❌ No email template found for shop:", shop);
       throw new Error("No email template found for this shop");
-    }
-
-    if (templateData.shopName !== shop) {
-      console.error("❌ Template shop mismatch!");
-      throw new Error(`Template mismatch: got ${templateData.shopName} instead of ${shop}`);
     }
 
     const variantDetailsPromises = restockedVariants.map((variant) =>
@@ -216,8 +195,8 @@ export async function sendRestockNotification(restockedVariants, shop, token, op
       if (isManual) {
         const prog = manualSendProgress.get(shop);
         if (prog) {
-          manualSendProgress.set(shop, { 
-            ...prog, 
+          manualSendProgress.set(shop, {
+            ...prog,
             current: i + 1,
             failedCount: (prog.failedCount || 0) + (successfullyNotifiedEmails.includes(email) ? 0 : 1)
           });
@@ -240,9 +219,9 @@ export async function sendRestockNotification(restockedVariants, shop, token, op
       }
     }
 
-    return { 
-      sentCount: successfullyNotifiedEmails.length, 
-      error: successfullyNotifiedEmails.length === 0 && matchingUsers.length > 0 ? "Server error: No emails were sent." : null 
+    return {
+      sentCount: successfullyNotifiedEmails.length,
+      error: successfullyNotifiedEmails.length === 0 && matchingUsers.length > 0 ? "Server error: No emails were sent." : null
     };
   } catch (error) {
     console.error("Error sending restock notification:", error);
@@ -258,25 +237,24 @@ export async function sendRestockNotification(restockedVariants, shop, token, op
 export async function updateUserEmailFlag(user, shopDomain, updateFields = { emailSent: 1, emailStatus: "sent" }) {
   console.log(`🔄 Updating email status for user ${user.email} in shop ${shopDomain}:`, updateFields);
   try {
-    const updateApi = `${process.env.SHOPIFY_APP_URL}/api/users`;
-
-    const response = await fetch(updateApi, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "updateEmailFlag",
-        email: user.email,
-        productId: user.productId,
-        variantId: user.variantId,
+    const updatedUser = await User.findOneAndUpdate(
+      {
+        email: user.email.toLowerCase().trim(),
+        productId: user.productId.toString().trim(),
+        variantId: user.variantId.toString().trim(),
         shopDomain,
+      },
+      {
         ...updateFields,
-      }),
-    });
+        updatedAt: new Date().toISOString(),
+      },
+      { new: true },
+    );
 
-    if (response.ok) {
+    if (updatedUser) {
       console.log(`✅ Updated emailSent flag for user ${user.email}`);
     } else {
-      console.error(`❌ Failed to update emailSent flag for user ${user.email}`);
+      console.error(`❌ User not found for update: ${user.email}`);
     }
   } catch (error) {
     console.error(`❌ Error updating emailSent flag for user ${user.email}:`, error);
