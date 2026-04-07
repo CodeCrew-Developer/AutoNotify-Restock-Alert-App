@@ -891,10 +891,9 @@ function updateUIForCurrentVariant(variantId) {
   const outOfStockVariants = allVariants.filter((variant) => {
     const isOutOfStock = variant.quantity === 0 || !variant.available;
     const isDenyPolicy = variant.inventoryPolicy === 'DENY';
-   
+    const isTracked = variant.inventoryTracked === true;
     
-    
-    return isOutOfStock && isDenyPolicy;
+    return isOutOfStock && isDenyPolicy && isTracked;
   });
 
 

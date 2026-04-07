@@ -53,6 +53,7 @@ const CreateTemplateModal = ({
   session,
   email,
   appUrl,
+  storeLogo,
 }) => {
   const API_ENDPOINTS = {
     template: appUrl + "/api/email_template",
@@ -140,9 +141,10 @@ const CreateTemplateModal = ({
           setTemplateData(mergedTemplate);
           setTemplateLoaded(true);
         } else {
-          // No existing template found, use default with shop name
+          // No existing template found, use default with shop name and store logo
           const defaultWithShop = {
             ...DEFAULT_TEMPLATE,
+            logoImage: storeLogo || DEFAULT_TEMPLATE.logoImage,
             copyright: `© ${CURRENT_YEAR} ${shopName}`,
           };
           setTemplateData(defaultWithShop);
@@ -154,9 +156,10 @@ const CreateTemplateModal = ({
         }
       } else {
         console.error("Failed to fetch template, status:", response.status);
-        // Use default template with shop name on error
+        // Use default template with shop name and store logo on error
         const defaultWithShop = {
           ...DEFAULT_TEMPLATE,
+          logoImage: storeLogo || DEFAULT_TEMPLATE.logoImage,
           copyright: `© ${CURRENT_YEAR} ${shopName}`,
         };
         setTemplateData(defaultWithShop);
@@ -164,9 +167,10 @@ const CreateTemplateModal = ({
       }
     } catch (error) {
       console.error("Error fetching template:", error);
-      // Use default template with shop name on error
+      // Use default template with shop name and store logo on error
       const defaultWithShop = {
         ...DEFAULT_TEMPLATE,
+        logoImage: storeLogo || DEFAULT_TEMPLATE.logoImage,
         copyright: `© ${CURRENT_YEAR} ${shopName}`,
       };
       setTemplateData(defaultWithShop);
@@ -285,7 +289,7 @@ const CreateTemplateModal = ({
     .product-card { border: 1px solid #e1e1e1; border-radius: 6px; padding: 20px; background-color: #fafafa; margin: 20px 0; }
     .product-content { display: table; width: 100%;}
     .product-image { display: table-cell; width: 130px; height: 130px; background-color: #ffffff; border-radius: 4px; vertical-align: top; }
-    .product-details { display: table-cell; padding-left: 15px; vertical-align: top; }
+    .product-details { display: table-cell; padding-left: 20px; vertical-align: top; }
     .product-name { font-size: ${data.productNameFontSize}px; font-weight: bold; color: #333; margin: 0 0 8px 0; line-height: 1.3; }
     .product-price { font-size: ${data.productPriceFontSize}px; font-weight: bold; color: #4CAF50; margin: 0; }
     .button-section { text-align: center; margin: 30px 0; }
@@ -294,9 +298,9 @@ const CreateTemplateModal = ({
     @media only screen and (max-width: 600px) {
       body { padding: 10px; }
       .content { padding: 0 20px; }
-      .product-content { display: block; display: flex; gap: 18px;}
-      .product-image { display: block; width: 30%; height: 60px; margin-bottom: 15px; }
-      .product-details { display: block; padding-left: 0; width:70% }
+      .product-content { display: flex; align-items: flex-start; }
+      .product-image { display: block; width: 100px; height: 100px; margin-bottom: 0; flex-shrink: 0; }
+      .product-details { display: block; padding-left: 20px; width: auto; flex-grow: 1; }
       .footer { padding: 20px; }
     }
   </style>
@@ -313,7 +317,7 @@ const CreateTemplateModal = ({
       <p class="message">${data.message}</p>
       <div class="product-section">
         <div class="product-card">
-          <div class="product-content" style="display: flex; gap: 10px;">
+          <div class="product-content" style="display: flex;">
             <div class="product-image">
               <img style="background-color: #000; width: 100%; border-radius: 4px; height: 100%;">
             </div>

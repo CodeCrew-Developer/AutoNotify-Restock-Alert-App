@@ -54,6 +54,7 @@ export const loader = async ({ request }) => {
   let webhookExists = false;
   let shopDetail = {};
   let shopSettings = null;
+  let storeLogo = "";
 
   try {
     const shopGraphql = await admin.graphql(`
@@ -62,10 +63,19 @@ export const loader = async ({ request }) => {
           name
           email
           myshopifyDomain
+          brand {
+            logo {
+              image {
+                url
+              }
+            }
+          }
         }
       }
     `);
-    shopDetail = (await shopGraphql.json()).data.shop;
+    const shopJson = await shopGraphql.json();
+    shopDetail = shopJson.data.shop;
+    storeLogo = shopDetail.brand?.logo?.image?.url || "";
 
     const usersResponse = await fetch(
       `${API_ENDPOINT}?shopDomain=${shopDetail.myshopifyDomain}`,
@@ -106,6 +116,7 @@ export const loader = async ({ request }) => {
     shopDomain: shopDetail.myshopifyDomain,
     appUrl,
     shopSettings,
+    storeLogo,
   };
 };
 
@@ -1251,6 +1262,7 @@ export default function EnhancedUsersPage() {
           session={session}
           setShowTemplateEditor={setShowTemplateEditor}
           appUrl={appUrl}
+          storeLogo={data.storeLogo}
         />
 
         {toastMarkup}

@@ -35,20 +35,6 @@ export const loader = async ({ request }) => {
     const appId = process.env.SHOPIFY_NOTIFY_ME_ID;
     // console.log("appIdappIdappId", appId)
 
-    // Call email template API to ensure default template is created
-    try {
-      const templateApiUrl = `${appUrl}/api/email_template?shopName=${encodeURIComponent(shop)}`;
-      await fetch(templateApiUrl, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      console.log(`✅ Default template ensured for shop: ${shop}`);
-    } catch (templateError) {
-      console.error('Error ensuring default template:', templateError);
-      // Continue with loader even if template creation fails
-    }
 
     // Get shop details
     const responseOfShop = await fetch(
@@ -71,16 +57,40 @@ export const loader = async ({ request }) => {
 
     const shopDetails = await responseOfShop.json();
 
-    // Get shop ID
+    // Get shop ID and brand info
     const shopQuery = await admin.graphql(`
       query {
         shop {
           id
+          brand {
+            logo {
+              image {
+                url
+              }
+            }
+          }
         }
       }
     `);
     const shopData = await shopQuery.json();
     const shopId = shopData.data.shop.id;
+    const storeLogo = shopData.data.shop.brand?.logo?.image?.url || "";
+    // console.log("Store Brand Logo:", storeLogo);
+
+    // Call email template API to ensure default template is created with store logo
+    try {
+      const templateApiUrl = `${appUrl}/api/email_template?shopName=${encodeURIComponent(shop)}&logoURL=${encodeURIComponent(storeLogo)}`;
+      await fetch(templateApiUrl, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      console.log(`✅ Default template ensured for shop: ${shop}`);
+    } catch (templateError) {
+      console.error("Error ensuring default template:", templateError);
+      // Continue with loader even if template creation fails
+    }
 
     //     // Save appUrl metafield
     await admin.graphql(`
