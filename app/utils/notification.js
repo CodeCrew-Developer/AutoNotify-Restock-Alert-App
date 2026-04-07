@@ -304,6 +304,9 @@ export async function fetchVariantDetailsFromInventoryId(inventoryItemId, shopDo
                     originalSrc
                   }
                   price
+                  inventoryItem {
+                    tracked
+                  }
                   product {
                     handle
                     title
@@ -344,6 +347,7 @@ export async function fetchVariantDetailsFromInventoryId(inventoryItemId, shopDo
       image: imageSrc,
       price: variant.price ? `$${variant.price}` : "",
       url: variantUrl,
+      tracked: variant.inventoryItem?.tracked
     };
   } catch (error) {
     console.error("GraphQL fetchVariantDetails error:", error);

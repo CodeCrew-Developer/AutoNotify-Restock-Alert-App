@@ -63,6 +63,9 @@ export const loader = async ({ request }) => {
                     price
                     inventoryQuantity
                     availableForSale
+                    inventoryItem {
+                      tracked
+                    }
                   }
                 }
               }
@@ -98,10 +101,12 @@ export const loader = async ({ request }) => {
 
           allActiveProducts.push(productData);
 
-          if (quantity === 0) {
-            outOfStockProducts.push(productData);
-          } else if (quantity > 0 && quantity <= 5) {
-            lowStockProducts.push(productData);
+          if (variant.inventoryItem?.tracked) {
+            if (quantity === 0) {
+              outOfStockProducts.push(productData);
+            } else if (quantity > 0 && quantity <= 5) {
+              lowStockProducts.push(productData);
+            }
           }
         });
       }

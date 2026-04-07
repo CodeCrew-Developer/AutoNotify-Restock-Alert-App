@@ -55,6 +55,7 @@ export async function action({ request }) {
               inventoryQuantity
               inventoryItem {
                 id
+                tracked
               }
             }
           }`, { variables: { id: gid } }
@@ -65,13 +66,14 @@ export async function action({ request }) {
         if (variantData) {
           const inventoryItemId = variantData.inventoryItem?.id.split('/').pop();
           const available = variantData.inventoryQuantity || 0;
+          const tracked = variantData.inventoryItem?.tracked;
           if (inventoryItemId) {
-            variantStockList.push({ inventory_item_id: inventoryItemId, available });
+            variantStockList.push({ inventory_item_id: inventoryItemId, available, tracked });
           }
         }
       }
 
-      const inStockVariants = variantStockList.filter(v => v.available > 0);
+      const inStockVariants = variantStockList.filter(v => v.tracked === false || v.available > 0);
       if (inStockVariants.length === 0) {
         return json({ success: true, message: "None of the requested products are currently in stock." });
       }
