@@ -139,7 +139,7 @@ export async function sendRestockNotification(restockedVariants, shop, token, op
           <div class="product-details">
             <h3 class="product-name">${details.title}</h3>
             <p class="product-price">${details.price}</p>
-            <p><strong>Now Available:</strong> ${variant.available}</p>
+            <p><strong>Now Available:</strong> ${variant.tracked === false || details.tracked === false ? "In Stock" : variant.available}</p>
           </div>
         </div>
       </div>
