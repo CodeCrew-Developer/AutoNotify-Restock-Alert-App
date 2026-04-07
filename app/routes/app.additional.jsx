@@ -359,11 +359,12 @@ export default function EnhancedUsersPage() {
       case 1:
         return baseUsers.filter((user) =>
           user.emailStatus === "sent" ||
-          (user.emailSent || 0) > 0
+          (!user.emailStatus && (user.emailSent || 0) > 0)
         );
       case 2:
         return baseUsers.filter((user) =>
-          user.emailStatus !== "sent" && user.emailStatus !== "failed" && (user.emailSent || 0) === 0
+          user.emailStatus === "pending" ||
+          (!user.emailStatus && (user.emailSent || 0) === 0)
         );
       case 3:
         return baseUsers.filter((user) => user.emailStatus === "failed");
@@ -388,8 +389,8 @@ export default function EnhancedUsersPage() {
           bValue = (b.variantId || "").toLowerCase();
           break;
         case 2: // Email Status
-          aValue = a.emailStatus === "failed" ? 3 : (a.emailStatus === "sent" || (a.emailSent || 0) > 0) ? 2 : 1;
-          bValue = b.emailStatus === "failed" ? 3 : (b.emailStatus === "sent" || (b.emailSent || 0) > 0) ? 2 : 1;
+          aValue = a.emailStatus === "failed" ? 3 : (a.emailStatus === "sent" || (!a.emailStatus && (a.emailSent || 0) > 0)) ? 2 : 1;
+          bValue = b.emailStatus === "failed" ? 3 : (b.emailStatus === "sent" || (!b.emailStatus && (b.emailSent || 0) > 0)) ? 2 : 1;
           break;
         case 3: // Timeline (createdAt)
           aValue = new Date(a.createdAt).getTime();
@@ -438,18 +439,18 @@ export default function EnhancedUsersPage() {
     0,
   );
   const usersWithEmailsSent = filteredUsers.filter(
-    (user) => user.emailStatus === "sent" || user.emailSent > 0,
+    (user) => user.emailStatus === "sent" || (!user.emailStatus && user.emailSent > 0),
   ).length;
   const pendingUsers = filteredUsers.filter(
-    (user) => user.emailStatus !== "sent" && user.emailStatus !== "failed" && (user.emailSent || 0) === 0,
+    (user) => user.emailStatus === "pending" || (!user.emailStatus && (user.emailSent || 0) === 0),
   ).length;
 
   // ── DETECTION LOGIC: If any recently sent email failed due to logic/SMTP ──
   const failedEmails = filteredUsers.filter((u) => u.emailStatus === "failed");
   const failedUsersCount = failedEmails.length;
 
-  const baseNotified = users.filter((u) => u.emailStatus === "sent" || (u.emailSent || 0) > 0).length;
-  const basePending = users.filter((u) => u.emailStatus !== "sent" && u.emailStatus !== "failed" && (u.emailSent || 0) === 0).length;
+  const baseNotified = users.filter((u) => u.emailStatus === "sent" || (!u.emailStatus && (u.emailSent || 0) > 0)).length;
+  const basePending = users.filter((u) => u.emailStatus === "pending" || (!u.emailStatus && (u.emailSent || 0) === 0)).length;
   const baseFailed = users.filter((u) => u.emailStatus === "failed").length;
 
   const tabs = React.useMemo(() => [
@@ -510,7 +511,8 @@ export default function EnhancedUsersPage() {
           tone={
             user.emailStatus === "sent" ? "success" :
               user.emailStatus === "failed" ? "critical" :
-                (user.emailSent > 0 ? "success" : "attention")
+                user.emailStatus === "pending" ? "attention" :
+                  (user.emailSent > 0 ? "success" : "attention")
           }
           size="small"
         >
