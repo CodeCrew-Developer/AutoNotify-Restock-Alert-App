@@ -432,14 +432,16 @@ export default function EnhancedUsersPage() {
 
   const totalEmailsSent = filteredUsers.reduce(
     (total, user) => {
-      if ((user.emailSent || 0) > 0) return total + user.emailSent;
-      if (user.emailStatus === "sent") return total + 1;
+      const isSent = user.emailStatus === "sent" || (!user.emailStatus && (user.emailSent || 0) > 0);
+      if (isSent) {
+        return total + Math.max(user.emailSent || 0, 1);
+      }
       return total;
     },
     0,
   );
   const usersWithEmailsSent = filteredUsers.filter(
-    (user) => user.emailStatus === "sent" || (!user.emailStatus && user.emailSent > 0),
+    (user) => user.emailStatus === "sent" || (!user.emailStatus && (user.emailSent || 0) > 0),
   ).length;
   const pendingUsers = filteredUsers.filter(
     (user) => user.emailStatus === "pending" || (!user.emailStatus && (user.emailSent || 0) === 0),

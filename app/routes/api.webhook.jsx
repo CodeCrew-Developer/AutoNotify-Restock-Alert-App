@@ -35,8 +35,8 @@ export async function action({ request }) {
       }
       const usersJson = await usersResponse.json();
       const pendingUsers = (usersJson.users || []).filter(user => 
-        (!user.emailStatus || user.emailStatus === "pending" || user.emailStatus === "failed") && 
-        (user.emailSent || 0) === 0
+        (user.emailStatus === "pending" || user.emailStatus === "failed") ||
+        (!user.emailStatus && (user.emailSent || 0) === 0)
       );
 
       if (pendingUsers.length === 0) {
