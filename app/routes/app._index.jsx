@@ -286,11 +286,11 @@ export default function NotifyDashboard() {
       appUrl: "https://apps.shopify.com/stock-locator",
     },
     {
-      title: "Trust Me",
+      title: "Trust Me: Reviews App",
       description:
         "Trust Me helps you collect, manage, and display authentic customer reviews on your store.",
       imageUrl:
-        "https://cdn.shopify.com/s/files/1/0560/1535/6003/files/trust_me.png?v=1757495776",
+        "https://cdn.shopify.com/s/files/1/0560/1535/6003/files/trust_me_logo.webp?v=1776074359",
       imageAlt: "Trust Me",
       appUrl: "https://apps.shopify.com/trust-me",
     },
